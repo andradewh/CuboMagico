@@ -47,9 +47,10 @@ CREATE TABLE `alunos` (
     `nome` varchar(255) NOT NULL,
     `idade` int(11) NOT NULL,
     `sexo` int(11) NOT NULL,
-    `turma` varchar(255) DEFAULT NULL,
+    `escola` int(11) NOT NULL,
     PRIMARY KEY (`id`),
-    FOREIGN KEY(`SEXO`) REFERENCES `sexo`(`id`)
+    FOREIGN KEY(`SEXO`) REFERENCES `sexo`(`id`),
+    FOREIGN KEY(`escola`) REFERENCES `escolas`(`id`)
  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `modalidades` (
@@ -66,6 +67,29 @@ insert into modalidades (nome) values ('Cubo 5x5');
 insert into modalidades (nome) values ('Cubo Pyraminx');
 insert into modalidades (nome) values ('Cubo Megaminx');
 insert into modalidades (nome) values ('Cubo Skewb');
+
+CREATE TABLE `alunomodalidade` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `aluno` int(11) NOT NULL,
+    `modalidade` int(11) NOT NULL,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`aluno`) REFERENCES `alunos` (`id`),
+    FOREIGN KEY (`modalidade`) REFERENCES `modalidades` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `alunomodalidadesolver` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `aluno` int(11) NOT NULL,
+    `modalidade` int(11) NOT NULL,
+    `solver1` varchar(255) NOT NULL,
+    `solver2` varchar(255) NOT NULL,
+    `solver3` varchar(255) NOT NULL,
+    `solver4` varchar(255) NOT NULL,
+    `solver5` varchar(255) NOT NULL,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`aluno`) REFERENCES `alunos` (`id`),
+    FOREIGN KEY (`modalidade`) REFERENCES `modalidades` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `usuarios` (
     `id` int(11) NOT NULL AUTO_INCREMENT,

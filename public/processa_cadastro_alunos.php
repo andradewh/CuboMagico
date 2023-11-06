@@ -4,16 +4,16 @@ require_once '../includes/db_connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = $_POST['nome'];
-    $email = $_POST['idade'];
-    $senha = $_POST['sexo'];
-    $senha = $_POST['turma'];
+    $idade = $_POST['idade'];
+    $sexo = $_POST['sexo'];
+    $escola = $_POST['escola'];
 
     // Verifique se o email já está em uso
-    $query = "SELECT id FROM alunos WHERE nome = :nome and idade = :idade and turma = :turma";
+    $query = "SELECT id FROM cubomagico.alunos WHERE nome = :nome and idade = :idade and escola = :escola";
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
     $stmt->bindParam(':idade', $idade, PDO::PARAM_INT);
-    $stmt->bindParam(':turma', $turma, PDO::PARAM_STR);
+    $stmt->bindParam(':escola', $escola, PDO::PARAM_STR);
     $stmt->execute();
 
     if ($stmt->rowCount() > 0) {
@@ -22,16 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Hash a senha antes de armazená-la no banco de dados
-    $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
-
     // Insira o novo usuário no banco de dados
-    $inserirQuery = "INSERT INTO usuarios (nome, idade, sexo, turma) VALUES (:nome, :idade, :sexo, :turma)";
+    $inserirQuery = "INSERT INTO alunos (nome, idade, sexo, escola) VALUES (:nome, :idade, :sexo, :escola)";
     $stmt = $pdo->prepare($inserirQuery);
     $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
     $stmt->bindParam(':idade', $idade, PDO::PARAM_INT);
     $stmt->bindParam(':sexo', $sexo, PDO::PARAM_INT);
-    $stmt->bindParam(':turma', $turma, PDO::PARAM_STR);
+    $stmt->bindParam(':escola', $escola, PDO::PARAM_INT);
     
     if ($stmt->execute()) {
         // O usuário foi cadastrado com sucesso, redirecione para uma página de sucesso ou para a página de login

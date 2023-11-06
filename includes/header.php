@@ -27,20 +27,11 @@
                     </div>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="turmasDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Turmas
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="turmasDropdown">
-                        <a class="dropdown-item" href="#">Cadastrar Turma</a>
-                        <a class="dropdown-item" href="#">Listar Turmas</a>
-                    </div>
-                </li>
-                <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="alunosDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Alunos
                     </a>
                     <div class="dropdown-menu" aria-labelledby="alunosDropdown">
-                        <a class="dropdown-item" href="../public/cadastro_aluno.php">Cadastrar Aluno</a>
+                        <a class="dropdown-item" href="../public/cadastro_alunos.php">Cadastrar Aluno</a>
                         <a class="dropdown-item" href="#">Listar Alunos</a>
                     </div>
                 </li>
@@ -58,8 +49,8 @@
                         Competição
                     </a>
                     <div class="dropdown-menu" aria-labelledby="competicaoDropdown">
-                        <a class="dropdown-item" href="#">Vincular Alunos e Modalides</a>
-                        <a class="dropdown-item" href="#">Inserir Resultados</a>
+                        <a class="dropdown-item" href="../public/edicao_alunos_modalidades.php">Vincular Alunos e Modalides</a>
+                        <a class="dropdown-item" href="../public/edicao_alunos_modalidades_resultados.php">Inserir Resultados</a>
                         <a class="dropdown-item" href="#">Resultados</a>
                     </div>
                 </li>
