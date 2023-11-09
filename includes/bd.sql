@@ -99,3 +99,47 @@ CREATE TABLE `usuarios` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `email` (`email`)
  ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4;
+
+
+ DELIMITER //
+
+CREATE FUNCTION converterSegundosParaTempo(segundos DECIMAL(10,2))
+RETURNS VARCHAR(20)
+BEGIN
+    DECLARE minutos INT;
+    DECLARE segundosInt INT;
+    DECLARE centesimos INT;
+    DECLARE tempo VARCHAR(20);
+
+    SET minutos = FLOOR(segundos / 60);
+    SET segundosInt = FLOOR(segundos - minutos * 60);
+    SET centesimos = FLOOR((segundos - minutos * 60 - segundosInt) * 100);
+    SET tempo = CONCAT(
+        LPAD(minutos, 2, '0'), ':',
+        LPAD(segundosInt, 2, '0'), '.',
+        LPAD(centesimos, 2, '0')
+    );
+
+    RETURN tempo;
+END;
+DELIMITER//
+
+delimiter //
+CREATE FUNCTION `CONVERTERTEMPOPARASEGUNDOS`(tempo VARCHAR(20)) RETURNS decimal(10,2)
+ BEGIN
+     DECLARE minutos INT;
+     DECLARE segundos INT;
+     DECLARE centesimos DECIMAL(10,2);
+     DECLARE totalSegundos DECIMAL(10,2);
+ 
+     SET minutos = SUBSTRING_INDEX(tempo, ':', 1);
+     SET tempo = SUBSTRING_INDEX(tempo, ':', -1);
+     SET segundos = SUBSTRING_INDEX(tempo, '.', 1);
+     SET centesimos = SUBSTRING_INDEX(tempo, '.', -1);
+ 
+     SET totalSegundos = minutos * 60 + segundos + centesimos / 100;
+     
+     RETURN totalSegundos;
+ END;
+ delimiter//
+ 

@@ -37,14 +37,12 @@ FROM
     alunos a ON ams.aluno = a.id
         INNER JOIN
     modalidades m ON ams.modalidade = m.id
-GROUP BY m.nome , a.nome , a.sexo
-ORDER BY m.nome , a.sexo";
+ORDER BY m.nome, a.sexo, media, aluno";
 
 $result = $pdo->query($sql);
 
 // Inicialize arrays vazios para as listas divididas por modalidade e sexo
 $listasPorModalidade = array();
-$listasPorSexo = array();
 
 while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
     $modalidade = $row["modalidade"];
@@ -56,68 +54,105 @@ while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
     if (!isset($listasPorModalidade[$modalidade])) {
         $listasPorModalidade[$modalidade] = array();
     }
-    $listasPorModalidade[$modalidade][] = array("aluno" => $aluno, "media" => $media);
 
-    // Adicione o aluno à lista por sexo
-    if (!isset($listasPorSexo[$sexo])) {
-        $listasPorSexo[$sexo] = array();
+    // Adicione o aluno à lista correspondente ao sexo
+    if (!isset($listasPorModalidade[$modalidade][$sexo])) {
+        $listasPorModalidade[$modalidade][$sexo] = array();
     }
-    $listasBySex[$sexo][] = array("aluno" => $aluno, "media" => $media);
+    
+    $listasPorModalidade[$modalidade][$sexo][] = array("aluno" => $aluno, "media" => $media);
 }
 
-// Agora você tem as listas divididas por modalidade e sexo em $listasPorModalidade e $listasPorSexo
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Listas de Resultados</title>
-    <link rel="stylesheet" href="caminho_para_bootstrap/css/bootstrap.min.css">
+    <title>Ranking de Alunos por Modalidade e Sexo</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Defina a largura das colunas da tabela */
+        th {
+            width: 200px; /* Largura fixa para a coluna "Aluno" */
+        }
+        td {
+            width: 150px; /* Largura fixa para a coluna "Média das Solvers" */
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Listas de Resultados por Modalidade</h1>
         <?php
-        foreach ($listasPorModalidade as $modalidade => $alunos) {
-            echo "<h2>Modalidade: $modalidade</h2>";
-            echo '<table class="table table-striped">
+        foreach ($listasPorModalidade as $modalidade => $sexos) {
+            echo "<h1>Ranking de Alunos por Modalidade - $modalidade</h1>";
+
+            // Inicialize contadores de colocação para ambos os sexos
+            $colocacaoMasculino = 1;
+            $colocacaoFeminino = 1;
+
+            // Divida a lista por sexo
+            $sexoMasculino = $sexos["Masculino"];
+            $sexoFeminino = $sexos["Feminino"];
+
+            // Verifique se há resultados para o sexo masculino
+            if (count($sexoMasculino) > 0) {
+                echo "<h2>Sexo: Masculino</h2>";
+                echo '<table class="table table-striped">
                     <thead>
                         <tr>
+                            <th>Colocação</th>
                             <th>Aluno</th>
                             <th>Média das Solvers</th>
                         </tr>
                     </thead>
                     <tbody>';
-            foreach ($alunos as $aluno) {
-                echo "<tr>";
-                echo "<td>" . $aluno["aluno"] . "</td>";
-                echo "<td>" . $aluno["media"] . "</td>";
-                echo "</tr>";
-            }
-            echo '</tbody>
+                // Ordena a lista por média da menor para a maior
+                usort($sexoMasculino, function ($a, $b) {
+                    return floatval($a["media"]) - floatval($b["media"]);
+                });
+                foreach ($sexoMasculino as $aluno) {
+                    echo "<tr>";
+                    echo "<td style='width: 50px;'>" . $colocacaoMasculino . "</td>";
+                    echo "<td style='width: 200px;'>" . $aluno["aluno"] . "</td>";
+                    echo "<td style='width: 150px;'>" . $aluno["media"] . "</td>";
+                    echo "</tr>";
+                    $colocacaoMasculino++; // Incrementa a colocação
+                }
+                echo '</tbody>
                 </table>';
-        }
-        ?>
-        <h1>Listas de Resultados por Sexo</h1>
-        <?php
-        foreach ($listasPorSexo as $sexo => $alunos) {
-            echo "<h2>Sexo: $sexo</h2>";
-            echo '<table class="table table-striped">
+            } else {
+                echo "Não há resultados para esta modalidade e sexo masculino.";
+            }
+
+            // Verifique se há resultados para o sexo feminino
+            if (count($sexoFeminino) > 0) {
+                echo "<h2>Sexo: Feminino</h2>";
+                echo '<table class="table table-striped">
                     <thead>
                         <tr>
+                            <th>Colocação</th>
                             <th>Aluno</th>
                             <th>Média das Solvers</th>
                         </tr>
                     </thead>
                     <tbody>';
-            foreach ($alunos as $aluno) {
-                echo "<tr>";
-                echo "<td>" . $aluno["aluno"] . "</td>";
-                echo "<td>" . $aluno["media"] . "</td>";
-                echo "</tr>";
-            }
-            echo '</tbody>
+                // Ordena a lista por média da menor para a maior
+                usort($sexoFeminino, function ($a, $b) {
+                    return floatval($a["media"]) - floatval($b["media"]);
+                });
+                foreach ($sexoFeminino as $aluno) {
+                    echo "<tr>";
+                    echo "<td style='width: 50px;'>" . $colocacaoFeminino . "</td>";
+                    echo "<td style='width: 200px;'>" . $aluno["aluno"] . "</td>";
+                    echo "<td style='width: 150px;'>" . $aluno["media"] . "</td>";
+                    echo "</tr>";
+                    $colocacaoFeminino++; // Incrementa a colocação
+                }
+                echo '</tbody>
                 </table>';
+            } else {
+                echo "Não há resultados para esta modalidade e sexo feminino.";
+            }
         }
         ?>
     </div>
