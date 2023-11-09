@@ -13,30 +13,31 @@ if (isset($_SESSION['usuario'])) {
 
 // Consulta SQL para obter os resultados
 $sql = "SELECT 
-    m.nome AS modalidade,
-    a.nome AS aluno,
-    a.sexo,
-    CONVERTERSEGUNDOSPARATEMPO(((CONVERTERTEMPOPARASEGUNDOS(solver1) + 
-                                    CONVERTERTEMPOPARASEGUNDOS(solver2) + 
-                                    CONVERTERTEMPOPARASEGUNDOS(solver3) + 
-                                    CONVERTERTEMPOPARASEGUNDOS(solver4) + 
-                                    CONVERTERTEMPOPARASEGUNDOS(solver5)) - 
-                                    LEAST(CONVERTERTEMPOPARASEGUNDOS(solver1),
-                                          CONVERTERTEMPOPARASEGUNDOS(solver2),
-                                          CONVERTERTEMPOPARASEGUNDOS(solver3),
-                                          CONVERTERTEMPOPARASEGUNDOS(solver4),
-                                          CONVERTERTEMPOPARASEGUNDOS(solver5)) - 
-                                          GREATEST(CONVERTERTEMPOPARASEGUNDOS(solver1),
-                                                CONVERTERTEMPOPARASEGUNDOS(solver2),
-                                                CONVERTERTEMPOPARASEGUNDOS(solver3),
-                                                CONVERTERTEMPOPARASEGUNDOS(solver4),
-                                                CONVERTERTEMPOPARASEGUNDOS(solver5))) / 3) AS media
+m.nome AS modalidade,
+a.nome AS aluno,
+a.sexo,
+CONVERTERSEGUNDOSPARATEMPO(((CONVERTERTEMPOPARASEGUNDOS(solver1) + 
+                                CONVERTERTEMPOPARASEGUNDOS(solver2) + 
+                                CONVERTERTEMPOPARASEGUNDOS(solver3) + 
+                                CONVERTERTEMPOPARASEGUNDOS(solver4) + 
+                                CONVERTERTEMPOPARASEGUNDOS(solver5)) - 
+                                LEAST(CONVERTERTEMPOPARASEGUNDOS(solver1),
+                                      CONVERTERTEMPOPARASEGUNDOS(solver2),
+                                      CONVERTERTEMPOPARASEGUNDOS(solver3),
+                                      CONVERTERTEMPOPARASEGUNDOS(solver4),
+                                      CONVERTERTEMPOPARASEGUNDOS(solver5)) - 
+                                      GREATEST(CONVERTERTEMPOPARASEGUNDOS(solver1),
+                                            CONVERTERTEMPOPARASEGUNDOS(solver2),
+                                            CONVERTERTEMPOPARASEGUNDOS(solver3),
+                                            CONVERTERTEMPOPARASEGUNDOS(solver4),
+                                            CONVERTERTEMPOPARASEGUNDOS(solver5))) / 3) AS media
 FROM
-    alunomodalidadesolver ams
-        INNER JOIN
-    alunos a ON ams.aluno = a.id
-        INNER JOIN
-    modalidades m ON ams.modalidade = m.id
+alunomodalidadesolver ams
+    INNER JOIN
+alunos a ON ams.aluno = a.id
+    INNER JOIN
+modalidades m ON ams.modalidade = m.id
+where solver1 <> '' and solver2 <> '' and solver3 <> '' and solver4 <> '' and solver5 <> ''
 ORDER BY m.nome, a.sexo, media, aluno";
 
 $result = $pdo->query($sql);
@@ -91,8 +92,8 @@ while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
             $colocacaoFeminino = 1;
 
             // Divida a lista por sexo
-            $sexoMasculino = $sexos["Masculino"];
-            $sexoFeminino = $sexos["Feminino"];
+            $sexoMasculino = isset($sexos["Masculino"]) ? $sexos["Masculino"] : array();
+            $sexoFeminino = isset($sexos["Feminino"]) ? $sexos["Feminino"] : array();
 
             // Verifique se há resultados para o sexo masculino
             if (count($sexoMasculino) > 0) {
