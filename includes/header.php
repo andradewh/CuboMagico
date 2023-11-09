@@ -51,7 +51,7 @@
                     <div class="dropdown-menu" aria-labelledby="competicaoDropdown">
                         <a class="dropdown-item" href="../public/edicao_alunos_modalidades.php">Vincular Alunos e Modalides</a>
                         <a class="dropdown-item" href="../public/edicao_alunos_modalidades_resultados.php">Inserir Resultados</a>
-                        <a class="dropdown-item" href="#">Resultados</a>
+                        <a class="dropdown-item" href="../public/lista_resultados.php">Resultados</a>
                     </div>
                 </li>
                 <li class="nav-item dropdown">

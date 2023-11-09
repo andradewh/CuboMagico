@@ -175,4 +175,11 @@ function obterVinculosExistentes($alunoId) {
 
     return $vinculos;
 }
+
+function validarFormatoTempo($tempo) {
+    // Use preg_match para verificar o formato do tempo
+    // O padrão da expressão regular corresponde a "01:30.55"
+    $padrao = "/^\d{2}:\d{2}\.\d{2}$/";
+    return preg_match($padrao, $tempo) === 1;
+}
 ?>
