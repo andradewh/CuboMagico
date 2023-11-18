@@ -18,7 +18,8 @@ $result = $pdo->query($sql);
 
 $sql_list = "SELECT alunos.id, alunos.nome, alunos.idade, if(alunos.sexo = 1,'Masculino','Feminino') sexo, escolas.nome escola 
           from cubomagico.escolas
-          join cubomagico.alunos ON alunos.escola = escolas.id";
+          join cubomagico.alunos ON alunos.escola = escolas.id
+          order by alunos.id";
 $result_list = $pdo->query($sql_list);
 
 ?>
@@ -97,7 +98,7 @@ $result_list = $pdo->query($sql_list);
                         echo "<td class='d-flex'>";
                         echo "<a class='btn btn-sm btn-success edit-btn mr-2' data-toggle='modal' data-target='#pageModal' data-id='{$alunos_data['id']}'>Editar</a>";
                         echo "
-                        <form method='post' action='processa_apaga_usuario.php'>
+                        <form method='post' action='processa_apaga_aluno.php'>
                         <input type='hidden' name='id' value='{$alunos_data['id']}'>
                         <button type='submit' class='btn btn-sm btn-danger delete-btn ml-auto mr-2'>Deletar</button>
                         </form>";
