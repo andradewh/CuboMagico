@@ -1,3 +1,7 @@
+CREATE DATABASE cubomagico;
+
+USE cubomagico;
+
 CREATE TABLE `sexo` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `nome` varchar(10),
@@ -55,9 +59,9 @@ CREATE TABLE `alunos` (
 
 CREATE TABLE `modalidades` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
-    `nome` varchar(100)
+    `nome` varchar(100),
     PRIMARY KEY (`id`),
-    UNIQUE KEY `email` (`email`)
+    UNIQUE KEY `nome` (`nome`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 insert into modalidades (nome) values ('Cubo 2x2');
@@ -122,7 +126,8 @@ BEGIN
 
     RETURN tempo;
 END;
-DELIMITER//
+//
+DELIMITER ;
 
 delimiter //
 CREATE FUNCTION `CONVERTERTEMPOPARASEGUNDOS`(tempo VARCHAR(20)) RETURNS decimal(10,2)
@@ -140,6 +145,7 @@ CREATE FUNCTION `CONVERTERTEMPOPARASEGUNDOS`(tempo VARCHAR(20)) RETURNS decimal(
      SET totalSegundos = minutos * 60 + segundos + centesimos / 100;
      
      RETURN totalSegundos;
- END;
- delimiter//
+END;
+//
+DELIMITER ;
  
