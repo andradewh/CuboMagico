@@ -1,6 +1,5 @@
 <?php
 session_start();
-include '../includes/header.php';
 include '../includes/funcs.php';
 include '../includes/db_connection.php';
 
@@ -10,6 +9,9 @@ if (isset($_SESSION['usuario'])) {
     header('Location: login.php');
     exit;
 }
+
+include '../includes/layout_top.php';
+include '../includes/header.php';
 
 // Consulta SQL para obter os resultados
 $sql = "SELECT 
@@ -158,4 +160,5 @@ while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
         ?>
     </div>
 </body>
-</html>
+
+<?php include '../includes/layout_bottom.php'; ?>

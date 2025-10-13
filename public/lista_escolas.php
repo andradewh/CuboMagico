@@ -1,6 +1,5 @@
 <?php
 session_start();
-include '../includes/header.php';
 include '../includes/funcs.php';
 include '../includes/db_connection.php';
 
@@ -13,13 +12,15 @@ if (isset($_SESSION['usuario'])) {
     exit;
 }
 
+include '../includes/layout_top.php';
+include '../includes/header.php';
+
 $sql = "select * from escolas";
 
 $result = $pdo->query($sql);
 
 ?>
-<!DOCTYPE html>
-<html>
+
 <head>
     <title>Cadastro de Usuário</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -80,4 +81,5 @@ $result = $pdo->query($sql);
         });
     </script>
 </body>
-</html>
+
+<?php include '../includes/layout_bottom.php'; ?>

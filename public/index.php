@@ -1,6 +1,5 @@
 <?php
 session_start();
-include '../includes/header.php';
 include '../includes/funcs.php';
 
 if (isset($_SESSION['usuario'])) {
@@ -11,9 +10,12 @@ if (isset($_SESSION['usuario'])) {
     header('Location: login.php');
     exit;
 }
+
+include '../includes/layout_top.php';
+include '../includes/header.php';
+
 ?>
-<!DOCTYPE html>
-<html>
+
 <head>
     <title>Bem-vindo</title>
 </head>
@@ -21,4 +23,5 @@ if (isset($_SESSION['usuario'])) {
     <h1>Bem-vindo <?php echo $nomeUsuario; ?></h1>
 
 </body>
-</html>
+
+<?php include '../includes/layout_bottom.php'; ?>

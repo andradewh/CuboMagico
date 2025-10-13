@@ -1,6 +1,5 @@
 <?php
 session_start();
-include '../includes/header.php';
 include '../includes/funcs.php';
 include '../includes/db_connection.php';
 
@@ -10,6 +9,9 @@ if (isset($_SESSION['usuario'])) {
     header('Location: login.php');
     exit;
 }
+
+include '../includes/layout_top.php';
+include '../includes/header.php';
 
 // Consulta para obter a lista de alunos
 $sqlAlunos = "SELECT id, nome FROM alunos";
@@ -21,8 +23,6 @@ $sqlModalidades = "SELECT id, nome FROM modalidades";
 $stmtModalidades = $pdo->query($sqlModalidades);
 $modalidades = $stmtModalidades->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<!DOCTYPE html>
-<html>
 <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
@@ -74,4 +74,5 @@ $modalidades = $stmtModalidades->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 </body>
-</html>
+
+<?php include '../includes/layout_bottom.php'; ?>

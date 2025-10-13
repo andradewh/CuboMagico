@@ -1,6 +1,5 @@
 <?php
 session_start();
-include '../includes/header.php';
 include '../includes/funcs.php';
 include '../includes/db_connection.php';
 
@@ -10,6 +9,9 @@ if (isset($_SESSION['usuario'])) {
     header('Location: login.php');
     exit;
 }
+
+include '../includes/layout_top.php';
+include '../includes/header.php';
 
 // Função para obter os vínculos de alunos com modalidades
 function obterVinculosAlunosModalidades() {
@@ -43,8 +45,6 @@ function obterValoresSolverExistente($modalidadeId, $alunoId) {
 }
 ?>
 
-<!DOCTYPE html>
-<html>
 <head>
     <title>Formulário de Resoluções</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
@@ -176,4 +176,6 @@ document.addEventListener("DOMContentLoaded", function () {
         </form>
     </div>
 </body>
-</html>
+
+
+<?php include '../includes/layout_bottom.php'; ?>

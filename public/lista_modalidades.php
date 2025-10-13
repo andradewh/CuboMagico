@@ -1,6 +1,5 @@
 <?php
 session_start();
-include '../includes/header.php';
 include '../includes/funcs.php';
 include '../includes/db_connection.php';
 
@@ -12,6 +11,9 @@ if (isset($_SESSION['usuario'])) {
     header('Location: login.php');
     exit;
 }
+
+include '../includes/layout_top.php';
+include '../includes/header.php';
 
 $sql = "select * from modalidades";
 
@@ -97,4 +99,5 @@ $result = $pdo->query($sql);
         });
     </script>    
 </body>
-</html>
+
+<?php include '../includes/layout_bottom.php'; ?>

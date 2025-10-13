@@ -1,6 +1,5 @@
 <?php
 session_start();
-include '../includes/header.php';
 include '../includes/funcs.php';
 include '../includes/db_connection.php';
 
@@ -13,6 +12,10 @@ if (isset($_SESSION['usuario'])) {
     exit;
 }
 
+
+include '../includes/layout_top.php';
+include '../includes/header.php';
+
 $sql = "SELECT id, nome from cubomagico.escolas";
 $result = $pdo->query($sql);
 
@@ -23,8 +26,6 @@ $sql_list = "SELECT alunos.id, alunos.nome, alunos.idade, if(alunos.sexo = 1,'Ma
 $result_list = $pdo->query($sql_list);
 
 ?>
-<!DOCTYPE html>
-<html>
 <head>
     <title>Cadastro de Pessoas</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -152,3 +153,4 @@ $result_list = $pdo->query($sql_list);
     </script>
 </body>
 </html>
+<?php include '../includes/layout_bottom.php'; ?>
