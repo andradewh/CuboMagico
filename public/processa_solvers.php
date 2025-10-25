@@ -1,80 +1,95 @@
 <?php
 session_start();
 include '../includes/funcs.php';
-include '../includes/db_connection.php';
+include '../includes/db_connection.php'; // Assume que $pdo está disponível aqui
 
-if (isset($_SESSION['usuario'])) {
-    // Verificar se o formulário foi enviado
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        try {
-            // Processar os dados do formulário
-            $resolucoes = $_POST['resolucoes'];
+if (!isset($_SESSION['usuario'])) {
+    header('Location: login.php');
+    exit;
+}
 
-            // Loop através dos dados das resoluções
-            foreach ($resolucoes as $modalidadeId => $resolucoesAluno) {
-                foreach ($resolucoesAluno as $alunoId => $solverData) {
-                    // Inicialize um array para os valores do solver
-                    $solverValues = [];
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    // Se o formulário não foi enviado via POST, redirecione
+    header('Location: edicao_alunos_modalidades_resultados.php');
+    exit;
+}
 
-                    // Loop através dos valores do solver (solver1 a solver5)
-                    for ($i = 1; $i <= 5; $i++) {
-                        $valor = $solverData[$i];
+// ==========================================================
+// 1. INICIA A TRANSAÇÃO PDO PARA GARANTIR SEGURANÇA MULTI-USUÁRIO
+// ==========================================================
+try {
+    $pdo->beginTransaction();
+} catch (PDOException $e) {
+    error_log("Erro ao iniciar a transação: " . $e->getMessage());
+    header('Location: edicao_alunos_modalidades_resultados.php?status=error_db_init');
+    exit;
+}
 
-                        // Verifique se o campo não está vazio
-                        if (!empty($valor)) {
-                            // Verifique se o valor está no formato correto (MM:SS.CC)
-                            if (preg_match("/^\d{2}:\d{2}\.\d{2}$/", $valor)) {
-                                $solverValues["solver" . $i] = $valor;
-                            } else {
-                                $teste = preg_match("/^\d{2}:\d{2}\.\d{2}$/", $valor);
-                                error_log("Dados inválidos para aluno $alunoId e modalidade $modalidadeId com o valor de $valor/$teste.");
-                            }
-                        }
-                    }
+try {
+    $resolucoes = $_POST['resolucoes'];
 
-                    // Certifique-se de que existam valores válidos para inserir
-                    if (!empty($solverValues)) {
-                        // Aqui, você pode inserir os dados no banco de dados
-                        // Certifique-se de ajustar a consulta SQL de acordo com sua estrutura de tabela
-                        $sqlExcluir = "DELETE FROM alunomodalidadesolver WHERE aluno = :alunoId and modalidade = :modalidadeId";
-                        $stmtExcluir = $pdo->prepare($sqlExcluir);
-                        $stmtExcluir->bindParam(':alunoId', $alunoId, PDO::PARAM_INT);
-                        $stmtExcluir->bindParam(':modalidadeId', $modalidadeId, PDO::PARAM_INT);
-                        $stmtExcluir->execute();
+    // 2. PREPARA O SQL COM ON DUPLICATE KEY UPDATE
+    // Esta única instrução faz o INSERT se for novo ou o UPDATE se já existir.
+    $sql = "INSERT INTO alunomodalidadesolver (aluno, modalidade, solver1, solver2, solver3, solver4, solver5) 
+            VALUES (:aluno, :modalidade, :s1, :s2, :s3, :s4, :s5)
+            ON DUPLICATE KEY UPDATE 
+                solver1 = VALUES(solver1), 
+                solver2 = VALUES(solver2), 
+                solver3 = VALUES(solver3), 
+                solver4 = VALUES(solver4), 
+                solver5 = VALUES(solver5)";
+    
+    $stmt = $pdo->prepare($sql);
 
-                        $sql = "INSERT INTO alunomodalidadesolver (aluno, modalidade, " . implode(", ", array_keys($solverValues)) . ") VALUES (:aluno, :modalidade, " . implode(", ", array_map(function($key) {
-                            return ":" . $key;
-                        }, array_keys($solverValues))) . ")";
-
-                        $stmt = $pdo->prepare($sql);
-                        $params = [
-                            'aluno' => $alunoId,
-                            'modalidade' => $modalidadeId
-                        ];
-
-                        // Adicione os valores do solver aos parâmetros
-                        foreach ($solverValues as $key => $value) {
-                            $params[":" . $key] = $value;
-                        }
-
-                        $stmt->execute($params);
-                    }
+    // 3. LOOP E EXECUÇÃO
+    foreach ($resolucoes as $modalidadeId => $resolucoesAluno) {
+        foreach ($resolucoesAluno as $alunoId => $solverData) {
+            
+            $solverValues = [];
+            
+            // Coletar, validar e preencher todos os 5 solvers
+            for ($i = 1; $i <= 5; $i++) {
+                $valor = $solverData[$i] ?? ''; // Usa o valor do POST, ou string vazia se não existir
+                
+                // Validação: Se não for vazio e não seguir o formato MM:SS.CC, loga o erro e usa string vazia
+                if (!empty($valor) && !preg_match("/^\d{2}:\d{2}\.\d{2}$/", $valor)) {
+                    error_log("Dados inválidos (formato) para aluno $alunoId e modalidade $modalidadeId. Valor: $valor");
+                    $valor = ''; // Use string vazia para o banco
                 }
+                
+                $solverValues["solver" . $i] = $valor;
             }
 
-            // Redirecionar para a página de sucesso ou qualquer outra página desejada
-            header('Location: edicao_alunos_modalidades_resultados.php');
-            exit;
-        } catch (PDOException $e) {
-            error_log("Erro de Banco de Dados: " . $e->getMessage());
+            // Define os parâmetros para a instrução SQL
+            $params = [
+                ':aluno'      => $alunoId,
+                ':modalidade' => $modalidadeId,
+                ':s1'         => $solverValues["solver1"],
+                ':s2'         => $solverValues["solver2"],
+                ':s3'         => $solverValues["solver3"],
+                ':s4'         => $solverValues["solver4"],
+                ':s5'         => $solverValues["solver5"],
+            ];
+
+            // Executa o INSERT ou UPDATE
+            $stmt->execute($params);
         }
-    } else {
-        // Se o formulário não foi enviado, redirecione de volta para a página do formulário
-        header('Location: edicao_alunos_modalidades_resultados.php');
-        exit;
     }
-} else {
-    header('Location: login.php');
+
+    // 4. CONFIRMA A TRANSAÇÃO: Salva todas as alterações se não houve erros
+    $pdo->commit();
+
+    // Redireciona com sucesso
+    header('Location: edicao_alunos_modalidades_resultados.php?status=success');
+    exit;
+    
+} catch (PDOException $e) {
+    
+    // 5. DESFAZ A TRANSAÇÃO: Se ocorrer um erro, nenhuma alteração será salva
+    $pdo->rollBack();
+    
+    error_log("Erro de Banco de Dados durante o processamento: " . $e->getMessage());
+    header('Location: edicao_alunos_modalidades_resultados.php?status=error_db');
     exit;
 }
 ?>

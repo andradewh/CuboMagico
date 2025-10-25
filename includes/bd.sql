@@ -66,6 +66,7 @@ CREATE TABLE `modalidades` (
 
 insert into modalidades (nome) values ('Cubo 2x2');
 insert into modalidades (nome) values ('Cubo 3x3');
+insert into modalidades (nome) values ('Cubo 3x3 OH');
 insert into modalidades (nome) values ('Cubo 4x4');
 insert into modalidades (nome) values ('Cubo 5x5');
 insert into modalidades (nome) values ('Cubo Pyraminx');
@@ -93,6 +94,7 @@ CREATE TABLE `alunomodalidadesolver` (
     PRIMARY KEY (`id`),
     FOREIGN KEY (`aluno`) REFERENCES `alunos` (`id`),
     FOREIGN KEY (`modalidade`) REFERENCES `modalidades` (`id`)
+    CONSTRAINT `uk_aluno_modalidade` UNIQUE (`aluno`, `modalidade`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `usuarios` (
