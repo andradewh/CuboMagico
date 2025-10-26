@@ -26,12 +26,6 @@ $sql_list = "SELECT alunos.id, alunos.nome, alunos.idade, if(alunos.sexo = 1,'Ma
 $result_list = $pdo->query($sql_list);
 
 ?>
-<head>
-    <title>Cadastro de Pessoas</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../assets/css/style.css">
-</head>
 <body>
 <div class="container mt-5">
         <div class="row justify-content-center">

@@ -10,6 +10,9 @@ if (isset($_SESSION['usuario'])) {
     exit;
 }
 
+include '../includes/layout_top.php';
+include '../includes/header.php';
+
 if (isset($_POST['id'])) {
     $id = $_POST['id'];
 
@@ -32,13 +35,7 @@ if (isset($_POST['id'])) {
 
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Edição de Usuário</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-</head>
+
 <body>
     <h5 class="card-title text-center">Edição de Usuário</h5>
     <form action="processa_edicao_usuario.php" method="post">

@@ -1,45 +1,96 @@
-.table-bg{
-    background: rgba(0, 0, 0, 0.1);
+/* ARQUIVO: style.css (Corrigido) */
+
+/* Definição de Cores da WCA */
+:root {
+    --wca-blue: #003366; 
+    --wca-light-gray: #e9ecef; /* Cinza claro para o fundo do header */
+    --wca-dark-gray: #333333; /* Cinza escuro para o texto */
 }
 
-/* Estilizando o container do título */
-.titulo-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    margin: 20px 0; /* Espaço acima e abaixo do título */
+/* Fundo da Página e Fonte */
+body {
+    background-color: #ffffff; /* Cinza claro visível para o fundo da página */
+    font-family: Arial, sans-serif;
 }
 
-/* Estilizando o título */
-.titulo-container h1 {
-    font-size: 24px; /* Tamanho da fonte */
-    font-weight: bold; /* Peso da fonte */
-    color: #333; /* Cor do texto */
-    text-transform: uppercase; /* Transformar o texto em maiúsculas */
+/* ... (outras regras como table-bg, titulo-container podem permanecer) ... */
+
+/* ------------------------------------------------ */
+/* ESTILO DA BARRA DE NAVEGAÇÃO (HEADER) - CORRIGIDO */
+/* ------------------------------------------------ */
+
+.navbar-wca {
+    /* REINTRODUZIDO: Fundo Cinza Claro */
+    background-color: var(--wca-light-gray) !important; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Estilizando a tabela */
-table {
-    border-collapse: collapse; /* Remove espaços entre as bordas das células */
-    border: 2px solid #828181;
-    width: 100%; /* Tornar a tabela 100% da largura do contêiner pai, caso desejado */
+/* CORREÇÃO CHAVE: Aplica a cor cinza escuro aos links E aos ícones (i) dentro deles */
+.navbar-wca a,
+.navbar-wca a i { 
+    color: var(--wca-dark-gray) !important; 
 }
 
-/* Estilizando as células da tabela */
-table th, table td {
-    padding: 8px; /* Espaçamento interno para o conteúdo da célula */
-    text-align: center; /* Alinha o texto ao centro nas células */
+/* Garante que o texto de saudação também use a cor WCA */
+.navbar-wca .navbar-text {
+    color: var(--wca-dark-gray) !important;
 }
 
-/* Estilizando o cabeçalho da tabela (linha de cabeçalho) */
-table th {
-    background-color: #828181; /* Cor de fundo para distinção do cabeçalho */
-    font-weight: bold; /* Texto em negrito no cabeçalho */
-    text-transform: uppercase; /* Transforma o texto em maiúsculas no cabeçalho */
+/* Estilo de Hover */
+.navbar-wca .nav-link:hover {
+    background-color: #c9c9c9; /* Cinza um pouco mais escuro no hover */
+    border-radius: 4px;
 }
 
-/* Estilizando as células da tabela nas linhas ímpares com uma cor de fundo alternada */
-table tr:nth-child(odd) td {
-    background-color: #f5f5f5; /* Cor de fundo alternada para linhas ímpares */
+/* Estilo dos Botões Sair/Login (já devem estar como btn-outline-dark no HTML) */
+.navbar-wca .btn-outline-dark { /* Mudou de btn-outline-light para dark */
+    color: var(--wca-dark-gray);
+    border-color: var(--wca-dark-gray);
 }
+
+.navbar-wca .btn-outline-dark:hover { /* Mudou de btn-outline-light para dark */
+    background-color: var(--wca-dark-gray);
+    color: white; 
+}
+
+/* ESTILOS PARA OS ÍCONES CLICÁVEIS */
+        .icon-filter-group {
+            /* ** NOVO: Centraliza os ícones horizontalmente ** */
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap; /* Permite que os ícones quebrem a linha em telas pequenas */
+        }
+        
+        .icon-filter-group a {
+            /* Estilo base para parecer um botão pequeno */
+            padding: 8px 12px;
+            font-size: 1.1em;
+            margin-right: 5px;
+            margin-left: 5px; 
+            margin-bottom: 5px;
+            text-decoration: none;
+            /* Cores de botão Outline */
+            color: #6c757d; /* MUDANÇA: Cinza escuro para inativo */
+            border: 1px solid #6c757d; /* MUDANÇA: Borda cinza escuro para inativo */
+            background-color: #fff;
+            border-radius: .25rem;
+            display: inline-block;
+            line-height: 1.5;
+            text-align: center;
+        }
+        /* Estilo para o botão ativo (selecionado) */
+        .icon-filter-group a.active {
+            color: #fff;
+            background-color: #343a40; /* MUDANÇA: Cinza muito escuro para ativo */
+            border-color: #343a40; /* MUDANÇA: Borda cinza muito escuro para ativo */
+        }
+        .icon-filter-group a:hover:not(.active) {
+            background-color: #e9ecef; /* Mantém o hover cinza claro */
+        }
+        /* Garantindo o tamanho do ícone Font Awesome (assumindo Font Awesome disponível e 'cubing-icon' sendo seu equivalente) */
+        .icon-filter-group a i.fa-list,
+        .icon-filter-group a i.cubing-icon {
+            font-size: 1.2em;
+            /* Adicionei essa regra para garantir que os ícones inativos sejam cinza escuro */
+            color: inherit; 
+        }

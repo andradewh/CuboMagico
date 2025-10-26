@@ -60,6 +60,7 @@ CREATE TABLE `alunos` (
 CREATE TABLE `modalidades` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `nome` varchar(100),
+    `ativa` TINYINT(1) NOT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `nome` (`nome`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -93,7 +94,7 @@ CREATE TABLE `alunomodalidadesolver` (
     `solver5` varchar(255) NOT NULL,
     PRIMARY KEY (`id`),
     FOREIGN KEY (`aluno`) REFERENCES `alunos` (`id`),
-    FOREIGN KEY (`modalidade`) REFERENCES `modalidades` (`id`)
+    FOREIGN KEY (`modalidade`) REFERENCES `modalidades` (`id`),
     CONSTRAINT `uk_aluno_modalidade` UNIQUE (`aluno`, `modalidade`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -133,21 +134,36 @@ DELIMITER ;
 
 delimiter //
 CREATE FUNCTION `CONVERTERTEMPOPARASEGUNDOS`(tempo VARCHAR(20)) RETURNS decimal(10,2)
- BEGIN
-     DECLARE minutos INT;
-     DECLARE segundos INT;
-     DECLARE centesimos DECIMAL(10,2);
-     DECLARE totalSegundos DECIMAL(10,2);
- 
-     SET minutos = SUBSTRING_INDEX(tempo, ':', 1);
-     SET tempo = SUBSTRING_INDEX(tempo, ':', -1);
-     SET segundos = SUBSTRING_INDEX(tempo, '.', 1);
-     SET centesimos = SUBSTRING_INDEX(tempo, '.', -1);
- 
-     SET totalSegundos = minutos * 60 + segundos + centesimos / 100;
-     
-     RETURN totalSegundos;
+BEGIN
+    DECLARE minutos INT;
+    DECLARE segundos INT;
+    DECLARE centesimos DECIMAL(10,2);
+    DECLARE totalSegundos DECIMAL(10,2);
+    
+    -- TRATAMENTO CRÍTICO PARA TEMPO VAZIO OU INVÁLIDO (Ex: '0', 'DNF')
+    IF tempo = '' OR tempo = '0' OR UPPER(tempo) = 'DNF' THEN
+        -- Retorna 0 neste ponto, mas o SQL principal deve usar NULLIF(..., 0) para tratá-lo.
+        -- Poderíamos retornar NULL aqui, mas manteremos o 0 e faremos o tratamento no SQL principal para consistência.
+        RETURN 0.00; 
+    END IF;
+    
+    -- Checa se o formato é MM:SS.ms ou apenas SS.ms
+    IF INSTR(tempo, ':') > 0 THEN
+        -- Formato MM:SS.ms
+        SET minutos = SUBSTRING_INDEX(tempo, ':', 1);
+        SET tempo = SUBSTRING_INDEX(tempo, ':', -1);
+        SET segundos = SUBSTRING_INDEX(tempo, '.', 1);
+        SET centesimos = SUBSTRING_INDEX(tempo, '.', -1);
+    ELSE
+        -- Formato SS.ms (minutos = 0)
+        SET minutos = 0;
+        SET segundos = SUBSTRING_INDEX(tempo, '.', 1);
+        SET centesimos = SUBSTRING_INDEX(tempo, '.', -1);
+    END IF;
+
+    SET totalSegundos = minutos * 60 + segundos + centesimos / 100;
+    
+    RETURN totalSegundos;
 END;
 //
 DELIMITER ;
- 
