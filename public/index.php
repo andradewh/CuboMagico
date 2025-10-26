@@ -89,11 +89,10 @@ include '../includes/header.php';
 
 ?>
 
-<h1>Bem-vindo, <?php echo htmlspecialchars($nomeUsuario); ?>!</h1>
 <main class="container mt-4">
 
     
-    <h2 class="mb-4 text-muted">Dashboard da Competição</h2>
+    <h2 class="mb-4 text-muted">Dados sintéticos da Competição</h2>
 
     <div class="row mb-4">
         <div class="col-md-6 mb-3">

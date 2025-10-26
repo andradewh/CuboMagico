@@ -86,7 +86,7 @@ $usuario_logado = isset($_SESSION['usuario']) && !empty($_SESSION['usuario']);
     <div class="d-flex">
         <?php if ($usuario_logado): ?>
             <span class="navbar-text text-dark mr-3 d-none d-lg-block">
-                 Olá, <?php echo obterNomeDoBancoDeDados($_SESSION['usuario']); ?>
+                 Bem vindo <b><?php echo obterNomeDoBancoDeDados($_SESSION['usuario']); ?></b>
             </span>
             <form class="form-inline" method="post" action="logout.php">
                 <button class="btn btn-outline-dark my-2 my-sm-0" type="submit">
