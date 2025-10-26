@@ -71,6 +71,15 @@ $usuario_logado = isset($_SESSION['usuario']) && !empty($_SESSION['usuario']);
                     <a class="dropdown-item" href="cadastro_usuarios.php"><i class="fa-solid fa-user-shield"></i> Usuários</a>
                 </div>
             </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="dashDropdown" role="button" data-toggle="dropdown"
+                   aria-haspopup="true" aria-expanded="false">
+                   <i class="fa-solid fa-solid fa-house"></i> Análise de dados
+                </a>
+                <div class="dropdown-menu" aria-labelledby="dashDropdown">
+                    <a class="dropdown-item" href="../public/dash.php"><i class="fa-solid fa-solid fa-chart-line"></i> Dashboard</a>
+                </div>
+            </li>
         </ul>
     </div>
 
