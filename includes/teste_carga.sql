@@ -23,7 +23,8 @@ INSERT INTO alunos (nome, idade, sexo, escola) VALUES
 INSERT INTO alunomodalidade (aluno, modalidade)
 SELECT alunos.id, modalidades.id
 FROM alunos
-JOIN modalidades ON 1=1;
+JOIN modalidades ON 1=1
+where modalidades.ativa = 1;
 
 INSERT INTO alunomodalidadesolver (aluno, modalidade, solver1, solver2, solver3, solver4, solver5) VALUES
 (1,1,'00:58.21','01:02.33',NULL,'00:57.11','01:01.45'),

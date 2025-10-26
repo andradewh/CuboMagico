@@ -204,12 +204,13 @@ function formatar_solvers_ranking($solvers) {
 
 
 // ----------------------------------------------------------
-// CONFIGURAÇÃO DO FILTRO (Mantido)
+// CONFIGURAÇÃO DO FILTRO 
 // ----------------------------------------------------------
 
 $filtro_modalidade_id = isset($_GET['modalidade_id']) && $_GET['modalidade_id'] !== '' ? $_GET['modalidade_id'] : 'all';
 
-$sql_modalidades = "SELECT id, nome FROM modalidades ORDER BY nome";
+// Consulta das modalidades: JÁ ESTÁ FILTRANDO POR ATIVA = 1 (CORRETO)
+$sql_modalidades = "SELECT id, nome FROM modalidades where ativa = 1 ORDER BY nome"; // <<<< FILTRO DE ATIVAS APLICADO AQUI >>>>
 $modalidades_list = $pdo->query($sql_modalidades)->fetchAll(PDO::FETCH_ASSOC);
 
 $where_clause = '';
@@ -239,10 +240,12 @@ $sql = "SELECT
 FROM alunomodalidadesolver ams
 INNER JOIN alunos a ON ams.aluno = a.id
 INNER JOIN modalidades m ON ams.modalidade = m.id
+-- Filtra apenas as modalidades ativas
+WHERE m.ativa = 1 
 -- Filtra para ter pelo menos 4 solves válidas para calcular a média
-WHERE ( (solver1<>'') + (solver2<>'') + (solver3<>'') + (solver4<>'') + (solver5<>'') ) >= 4
+AND ( (solver1<>'') + (solver2<>'') + (solver3<>'') + (solver4<>'') + (solver5<>'') ) >= 4
 {$where_clause}
-ORDER BY m.nome, a.sexo, a.nome"; 
+ORDER BY m.nome, a.sexo, a.nome"; // <<<< MUDANÇA AQUI: Adição do filtro m.ativa = 1 >>>>
 
 $result = $pdo->query($sql);
 
@@ -361,12 +364,10 @@ while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
     </style>
     
     <div class="mt-4 mb-4">
-        <label class="d-block mb-2 text-center" style="font-weight: bold;">Filtrar por Modalidade:</label>
-        
-        <div class="icon-filter-group">
+        <label class="d-block mb-2 text-center" style="font-weight: bold;">Filtrar por Modalidade Ativa:</label> <div class="icon-filter-group">
             <a href="?modalidade_id=all" 
-               class="<?php echo ($filtro_modalidade_id === 'all') ? 'active' : ''; ?>" 
-               title="Todas as Modalidades">
+                class="<?php echo ($filtro_modalidade_id === 'all') ? 'active' : ''; ?>" 
+                title="Todas as Modalidades Ativas">
                 <i class="fas fa-list"></i>
             </a>
 
@@ -374,18 +375,22 @@ while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
                 $icon_suffix = get_modalidade_icon_suffix($mod['nome']);
                 $is_active = ((string)$filtro_modalidade_id === (string)$mod['id']);
                 
-                // Renderiza o botão apenas se houver um ícone WCA mapeado
+                // Renderiza o botão APENAS se houver um ícone WCA mapeado e a modalidade estiver na lista (que já filtra por 'ativa=1')
                 if ($icon_suffix):
             ?>
                 <a href="?modalidade_id=<?php echo htmlspecialchars($mod['id']); ?>" 
-                   class="<?php echo $is_active ? 'active' : ''; ?>" 
-                   title="<?php echo htmlspecialchars($mod['nome']); ?>">
+                    class="<?php echo $is_active ? 'active' : ''; ?>" 
+                    title="<?php echo htmlspecialchars($mod['nome']); ?>">
                     <i class="cubing-icon event-<?php echo $icon_suffix; ?>"></i>
                 </a>
             <?php 
                 endif;
             endforeach; ?>
         </div>
+        
+        <?php if (empty($modalidades_list) && $filtro_modalidade_id === 'all'): ?>
+            <div class='alert alert-warning text-center mt-3'>Nenhuma modalidade está ativa no momento. Ative-as na tela de Gerenciamento de Modalidades.</div>
+        <?php endif; ?>
     </div>
     <?php
     // ==========================================================
@@ -393,7 +398,11 @@ while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
     // ==========================================================
 
     if (empty($listasPorModalidade)) {
-        echo "<div class='alert alert-info'>Nenhum resultado encontrado para a seleção atual.</div>";
+        $msg = ($filtro_modalidade_id !== 'all') 
+             ? "Nenhum resultado encontrado para a modalidade selecionada." 
+             : "Nenhum aluno atingiu os requisitos de tempo para as modalidades ativas.";
+        
+        echo "<div class='alert alert-info'>{$msg}</div>";
     }
 
     $ordemFaixas = [

@@ -19,7 +19,7 @@ $stmtAlunos = $pdo->query($sqlAlunos);
 $alunos = $stmtAlunos->fetchAll(PDO::FETCH_ASSOC);
 
 // Consulta para obter a lista de modalidades
-$sqlModalidades = "SELECT id, nome FROM modalidades";
+$sqlModalidades = "SELECT id, nome FROM modalidades where ativa = 1";
 $stmtModalidades = $pdo->query($sqlModalidades);
 $modalidades = $stmtModalidades->fetchAll(PDO::FETCH_ASSOC);
 ?>

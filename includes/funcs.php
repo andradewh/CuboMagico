@@ -25,7 +25,7 @@ function obterNomeDoBancoDeDados($usuario_id) {
 
 function obterModalidades() {
     global $pdo;
-    $stmt = $pdo->query("SELECT * FROM modalidades");
+    $stmt = $pdo->query("SELECT * FROM modalidades where ativa = 1");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
