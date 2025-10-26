@@ -20,9 +20,9 @@ if (isset($_GET['status'])) {
     $status = $_GET['status'];
     
     // Captura os filtros que vieram na URL
-    $modalidadeFiltro = $_GET['modalidade_filtro'] ?? '';
+    $modalidadeFiltro = $_GET['modalidade_filtro'] ?? 'todos'; // Default 'todos'
     $alunoFiltro = $_GET['aluno_filtro'] ?? '';
-    $generoFiltro = $_GET['genero'] ?? '';
+    $generoFiltro = $_GET['genero'] ?? '1'; // Default '1' (Masculino)
     
     // Remove o parâmetro 'status' da URL e recarrega a página.
     $urlAtual = strtok($_SERVER["REQUEST_URI"], '?');
@@ -71,6 +71,7 @@ $alunoSelecionado = $filtrosSelecionados['aluno'] ?? '';
 // ==========================================================
 
 if (isset($_SESSION['usuario'])) {
+    // A função obterNomeDoBancoDeDados está agora em funcs.php
     $nomeUsuario = obterNomeDoBancoDeDados($_SESSION['usuario']);
 } else {
     header('Location: login.php');
@@ -81,39 +82,13 @@ if (isset($_SESSION['usuario'])) {
 include '../includes/layout_top.php';
 include '../includes/header.php';
 
-// --- Funções de Recuperação de Dados (sem alteração) ---
-function obterVinculosAlunosModalidades() {
-    global $pdo;
-    $stmt = $pdo->query("SELECT aluno, modalidade FROM alunomodalidade");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+// --- Preparação de Dados (Otimizado) ---
+// CHAVE 1: Carrega todos os dados do DB com o mínimo de consultas
+$modalidadesParaFiltro = obterModalidades(); // Funções movidas para funcs.php
+$todosOsAlunos = obterAlunos();             // Funções movidas para funcs.php
+$vinculos = obterVinculosAlunosModalidades(); // Funções movidas para funcs.php
+$solversGlobais = obterTodosOsValoresSolver(); // NOVO: Carrega todos os solvers em 1 consulta!
 
-function obterModalidades() {
-    global $pdo;
-    $stmt = $pdo->query("SELECT * FROM modalidades");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-function obterAlunos() {
-    global $pdo;
-    $stmt = $pdo->query("SELECT * FROM alunos");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
-function obterValoresSolverExistente($modalidadeId, $alunoId) {
-    global $pdo;
-    $stmt = $pdo->prepare("SELECT solver1, solver2, solver3, solver4, solver5 FROM alunomodalidadesolver WHERE modalidade = :modalidade AND aluno = :aluno");
-    $stmt->bindParam(':modalidade', $modalidadeId, PDO::PARAM_INT);
-    $stmt->bindParam(':aluno', $alunoId, PDO::PARAM_INT);
-    $stmt->execute();
-    return $stmt->fetch(PDO::FETCH_ASSOC);
-}
-
-// --- Preparação dos Dados para o PHP e JavaScript (sem alteração) ---
-$modalidadesParaFiltro = obterModalidades();
-$todosOsAlunos = obterAlunos(); 
-
-$vinculos = obterVinculosAlunosModalidades();
 $vinculosJson = [];
 foreach ($vinculos as $v) {
     $modalidadeKey = (string)$v['modalidade'];
@@ -261,7 +236,6 @@ document.addEventListener("DOMContentLoaded", function () {
     alunoSelect.addEventListener('change', exibirLinhaAluno); 
 
     // Inicialize a filtragem
-    // Use setTimeout para garantir que a seleção do aluno ocorra DEPOIS que as opções forem populadas
     setTimeout(filtrarAlunos, 50); 
 });
 </script>
@@ -324,6 +298,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             <?php if (!empty($alunoSelecionado)): ?>
                                 <option value="<?php echo htmlspecialchars($alunoSelecionado); ?>" selected>
                                     <?php 
+                                        // Busca o nome do aluno para exibir a opção selecionada corretamente
                                         $alunoObj = array_filter($todosOsAlunos, fn($a) => $a['id'] == $alunoSelecionado);
                                         echo htmlspecialchars($alunoObj ? array_values($alunoObj)[0]['nome'] : 'Carregando...');
                                     ?>
@@ -343,10 +318,6 @@ document.addEventListener("DOMContentLoaded", function () {
             <input type="hidden" name="genero_filtro_oculto" id="genero_filtro_oculto" value="<?php echo htmlspecialchars($generoSelecionado); ?>">
             
             <?php
-            // Lógica de exibição das tabelas
-            $modalidades = obterModalidades();
-            $alunos = obterAlunos();
-            
             // Reconstroi os vínculos para o HTML/PHP
             $vinculosExistentes = [];
             foreach ($vinculos as $vinculo) {
@@ -359,7 +330,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             // Exibe os campos do formulário (ocultos por padrão)
-            foreach ($modalidades as $modalidade) {
+            foreach ($modalidadesParaFiltro as $modalidade) {
                 $modalidadeId = $modalidade['id'];
                 
                 if (isset($vinculosExistentes[$modalidadeId]) && count($vinculosExistentes[$modalidadeId]) > 0) {
@@ -375,7 +346,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     echo '</thead>';
                     echo '<tbody>';
                     
-                    foreach ($alunos as $aluno) {
+                    foreach ($todosOsAlunos as $aluno) {
                         $alunoId = $aluno['id'];
                         
                         if (isset($vinculosExistentes[$modalidadeId][$alunoId])) {
@@ -383,8 +354,8 @@ document.addEventListener("DOMContentLoaded", function () {
                             echo '<tr class="resolucao-row" data-genero="' . htmlspecialchars($aluno['sexo']) . '" data-aluno-id="' . $alunoId . '" style="display:none;">';
                             echo '<td>' . htmlspecialchars($aluno['nome']) . '</td>';
                             
-                            // CHAVE: Reconsulta o valor mais recente do DB no momento do carregamento da página
-                            $valoresSolverExistente = obterValoresSolverExistente($modalidadeId, $alunoId);
+                            // CHAVE 2 (Otimizada): Pega o valor do array global, evitando consulta DB
+                            $valoresSolverExistente = $solversGlobais[$modalidadeId][$alunoId] ?? null;
                             
                             for ($i = 1; $i <= 5; $i++) {
                                 $inputName = "resolucoes[" . $modalidadeId . "][" . $alunoId . "][" . $i . "]";

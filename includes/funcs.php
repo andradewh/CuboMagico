@@ -1,11 +1,15 @@
 <?php
-// Conecte-se ao banco de dados
-require 'db_connection.php';
+// O include 'db_connection.php' foi movido para os arquivos principais,
+// mas para que 'obterNomeDoBancoDeDados' funcione isoladamente
+// ele deve estar aqui ou o require deve estar no arquivo principal
+require 'db_connection.php'; // Mantendo a estrutura original
+
+// ==========================================================
+// FUNÇÕES DE BUSCA DE DADOS (Consolidado e Otimizado)
+// ==========================================================
 
 function obterNomeDoBancoDeDados($usuario_id) {
-    global $pdo; // Torne a variável $pdo global para que seja acessível nesta função
-
-    // Consulta para obter o nome do usuário com base no ID
+    global $pdo; 
     $query = "SELECT nome FROM usuarios WHERE id = :usuario_id";
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':usuario_id', $usuario_id, PDO::PARAM_INT);
@@ -15,13 +19,55 @@ function obterNomeDoBancoDeDados($usuario_id) {
     if ($resultado) {
         return $resultado['nome'];
     } else {
-        // Trate o caso em que o usuário não foi encontrado
         return false;
     }
 }
 
+function obterModalidades() {
+    global $pdo;
+    $stmt = $pdo->query("SELECT * FROM modalidades");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function obterAlunos() {
+    global $pdo;
+    $stmt = $pdo->query("SELECT * FROM alunos");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function obterVinculosAlunosModalidades() {
+    global $pdo;
+    $stmt = $pdo->query("SELECT aluno, modalidade FROM alunomodalidade");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+/**
+ * FUNÇÃO OTIMIZADA para carregar todos os dados de solvers em uma única consulta.
+ * Isso substitui a chamada repetitiva de obterValoresSolverExistente()
+ * e resolve o problema N+1 Query.
+ */
+function obterTodosOsValoresSolver() {
+    global $pdo;
+    // Seleciona todos os campos de solver
+    $stmt = $pdo->query("SELECT aluno, modalidade, solver1, solver2, solver3, solver4, solver5 FROM alunomodalidadesolver");
+    $resultados = [];
+    
+    // Organiza os resultados em um array multidimensional por [modalidade][aluno]
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $modalidadeId = $row['modalidade'];
+        $alunoId = $row['aluno'];
+        
+        $resultados[$modalidadeId][$alunoId] = $row;
+    }
+    return $resultados;
+}
+
+// ==========================================================
+// FUNÇÕES AUXILIARES E CRUD DE OUTRAS ENTIDADES (Mantidas)
+// ==========================================================
+
 function obterUsuarioPorId($id) {
-    global $pdo; // Certifique-se de que sua conexão com o banco de dados esteja disponível nesta função
+    global $pdo; 
 
     $sql = "SELECT * FROM usuarios WHERE id = :id";
     $stmt = $pdo->prepare($sql);
@@ -34,23 +80,16 @@ function obterUsuarioPorId($id) {
 function atualizarUsuario($id, $nome, $email) {
     global $pdo;
 
-    // Prepara a consulta SQL para atualizar os dados do usuário
     $sql = "UPDATE usuarios SET nome = :nome, email = :email WHERE id = :id";
-
-    // Prepara a declaração PDO
     $stmt = $pdo->prepare($sql);
 
-    // Associa os valores aos parâmetros na consulta
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
     $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
     $stmt->bindParam(':email', $email, PDO::PARAM_STR);
 
-    // Executa a consulta
     if ($stmt->execute()) {
-        // A atualização foi bem-sucedida
         return true;
     } else {
-        // A atualização falhou
         return false;
     }
 }
@@ -58,31 +97,24 @@ function atualizarUsuario($id, $nome, $email) {
 function deletaUsuario($id) {
     global $pdo;
     
-    // Prepara a consulta SQL para atualizar os dados do usuário
     $sql = "DELETE FROM usuarios WHERE id = :id";
 
-    // Prepara a declaração PDO
     $stmt = $pdo->prepare($sql);
-
-    // Associa os valores aos parâmetros na consulta
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 
-    // Executa a consulta
     if ($stmt->execute()) {
-        // A atualização foi bem-sucedida
         return true;
     } else {
-        // A atualização falhou
         return false;
     }
 }
 
 function obterAlunoPorId($id) {
-    global $pdo; // Certifique-se de que sua conexão com o banco de dados esteja disponível nesta função
+    global $pdo; 
 
     $sql = "SELECT alunos.id, alunos.nome, alunos.idade, alunos.sexo, alunos.escola
-            from cubomagico.alunos 
-            WHERE alunos.id = :id";
+             from cubomagico.alunos 
+             WHERE alunos.id = :id";
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
     $stmt->execute();
@@ -93,22 +125,16 @@ function obterAlunoPorId($id) {
 function atualizarAluno($id, $nome, $idade, $sexo, $escola) {
     global $pdo;
 
-    // Prepara a consulta SQL para atualizar os dados do usuário
     $sql = "UPDATE alunos SET nome = :nome, idade = :idade, sexo = :sexo, escola = :escola WHERE id = :id";
-
-    // Prepara a declaração PDO
     $stmt = $pdo->prepare($sql);
 
-    // Associa os valores aos parâmetros na consulta
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
     $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
     $stmt->bindParam(':idade', $idade, PDO::PARAM_INT);
     $stmt->bindParam(':sexo', $sexo, PDO::PARAM_INT);
     $stmt->bindParam(':escola', $escola, PDO::PARAM_INT);
 
-    // Executa a consulta
     if ($stmt->execute()) {
-        // A atualização foi bem-sucedida
         $log_message = "Atualização bem-sucedida para o aluno com ID: $id";
         error_log($log_message);
         return true;
@@ -123,21 +149,13 @@ function atualizarAluno($id, $nome, $idade, $sexo, $escola) {
 function deletaAluno($id) {
     global $pdo;
     
-    // Prepara a consulta SQL para atualizar os dados do usuário
     $sql = "DELETE FROM alunos WHERE id = :id";
-
-    // Prepara a declaração PDO
     $stmt = $pdo->prepare($sql);
-
-    // Associa os valores aos parâmetros na consulta
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 
-    // Executa a consulta
     if ($stmt->execute()) {
-        // A atualização foi bem-sucedida
         return true;
     } else {
-        // A atualização falhou
         return false;
     }
 }
@@ -177,9 +195,11 @@ function obterVinculosExistentes($alunoId) {
 }
 
 function validarFormatoTempo($tempo) {
-    // Use preg_match para verificar o formato do tempo
     // O padrão da expressão regular corresponde a "01:30.55"
     $padrao = "/^\d{2}:\d{2}\.\d{2}$/";
     return preg_match($padrao, $tempo) === 1;
 }
+
+// A função obterValoresSolverExistente() foi removida daqui e substituída pela função obterTodosOsValoresSolver()
+// que é mais eficiente.
 ?>
