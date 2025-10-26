@@ -79,7 +79,7 @@ $result_list = $pdo->query($sql_list);
         <table class="table table-hover table-bordered border border-black rounded table-striped">
             <thead>
                 <tr>
-                    <th scope="col">#</th>
+                    <th scope="col">Codigo</th>
                     <th scope="col">Nome</th>
                     <th scope="col">Idade</th>
                     <th scope="col">Sexo</th>

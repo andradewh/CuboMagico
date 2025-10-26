@@ -3,6 +3,73 @@ session_start();
 include '../includes/funcs.php';
 include '../includes/db_connection.php';
 
+// ==========================================================
+// CONFIGURAÇÃO DE CACHE E VARIÁVEIS DE ESTADO
+// ==========================================================
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
+$statusMessage = '';
+$filtrosSelecionados = [];
+
+// ==========================================================
+// LÓGICA DE RECARREGAMENTO E MENSAGENS
+// ==========================================================
+if (isset($_GET['status'])) {
+    $status = $_GET['status'];
+    
+    // Captura os filtros que vieram na URL
+    $modalidadeFiltro = $_GET['modalidade_filtro'] ?? '';
+    $alunoFiltro = $_GET['aluno_filtro'] ?? '';
+    $generoFiltro = $_GET['genero'] ?? '';
+    
+    // Remove o parâmetro 'status' da URL e recarrega a página.
+    $urlAtual = strtok($_SERVER["REQUEST_URI"], '?');
+    
+    // Armazena a mensagem de status na sessão
+    if ($status === 'success') {
+        $_SESSION['status_message'] = ['type' => 'success', 'text' => 'Dados salvos com sucesso e atualizados!'];
+    } elseif ($status === 'error_db' || $status === 'error_db_init') {
+        $_SESSION['status_message'] = ['type' => 'danger', 'text' => 'Erro ao salvar os dados no banco. Tente novamente.'];
+    } elseif ($status === 'no_data') {
+        $_SESSION['status_message'] = ['type' => 'warning', 'text' => 'Nenhum dado para salvar foi encontrado.'];
+    } else {
+        $_SESSION['status_message'] = ['type' => 'danger', 'text' => 'Ocorreu um erro desconhecido.'];
+    }
+    
+    // Salva o estado dos filtros na sessão para redefinição após o redirecionamento
+    $_SESSION['filtros_selecionados'] = [
+        'modalidade' => $modalidadeFiltro,
+        'aluno' => $alunoFiltro,
+        'genero' => $generoFiltro
+    ];
+    
+    // Redireciona para a URL base
+    header("Location: " . $urlAtual); 
+    exit;
+}
+
+// Verifica se há mensagem de status na sessão e lê os filtros salvos
+if (isset($_SESSION['status_message'])) {
+    $statusMessage = $_SESSION['status_message'];
+    unset($_SESSION['status_message']); // Limpa a mensagem
+    
+    if (isset($_SESSION['filtros_selecionados'])) {
+        $filtrosSelecionados = $_SESSION['filtros_selecionados'];
+        unset($_SESSION['filtros_selecionados']); // Limpa os filtros
+    }
+}
+
+// Define os valores atuais dos filtros (lidos da sessão ou padrões)
+$modalidadeSelecionada = $filtrosSelecionados['modalidade'] ?? 'todos';
+$generoSelecionado = $filtrosSelecionados['genero'] ?? '1'; // Padrão: Masculino
+$alunoSelecionado = $filtrosSelecionados['aluno'] ?? '';
+
+// ==========================================================
+// INÍCIO DA PÁGINA E DEPENDÊNCIAS
+// ==========================================================
+
 if (isset($_SESSION['usuario'])) {
     $nomeUsuario = obterNomeDoBancoDeDados($_SESSION['usuario']);
 } else {
@@ -10,31 +77,29 @@ if (isset($_SESSION['usuario'])) {
     exit;
 }
 
+// Inclui topo, scripts/css (layout_top.php) e menu (header.php)
 include '../includes/layout_top.php';
 include '../includes/header.php';
 
-// Função para obter os vínculos de alunos com modalidades
+// --- Funções de Recuperação de Dados (sem alteração) ---
 function obterVinculosAlunosModalidades() {
     global $pdo;
     $stmt = $pdo->query("SELECT aluno, modalidade FROM alunomodalidade");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Função para obter as modalidades
 function obterModalidades() {
     global $pdo;
     $stmt = $pdo->query("SELECT * FROM modalidades");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Função para obter os alunos
 function obterAlunos() {
     global $pdo;
     $stmt = $pdo->query("SELECT * FROM alunos");
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Função para obter os valores do Solver existentes no banco de dados
 function obterValoresSolverExistente($modalidadeId, $alunoId) {
     global $pdo;
     $stmt = $pdo->prepare("SELECT solver1, solver2, solver3, solver4, solver5 FROM alunomodalidadesolver WHERE modalidade = :modalidade AND aluno = :aluno");
@@ -43,106 +108,263 @@ function obterValoresSolverExistente($modalidadeId, $alunoId) {
     $stmt->execute();
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
+
+// --- Preparação dos Dados para o PHP e JavaScript (sem alteração) ---
+$modalidadesParaFiltro = obterModalidades();
+$todosOsAlunos = obterAlunos(); 
+
+$vinculos = obterVinculosAlunosModalidades();
+$vinculosJson = [];
+foreach ($vinculos as $v) {
+    $modalidadeKey = (string)$v['modalidade'];
+    $alunoKey = (string)$v['aluno'];
+    if (!isset($vinculosJson[$modalidadeKey])) {
+        $vinculosJson[$modalidadeKey] = [];
+    }
+    $vinculosJson[$modalidadeKey][$alunoKey] = true; 
+}
 ?>
 
 <head>
     <title>Formulário de Resoluções</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script>
 document.addEventListener("DOMContentLoaded", function () {
     const generoSelect = document.getElementById('genero');
-    const resolucaoRows = document.querySelectorAll('.resolucao-row');
+    const modalidadeSelect = document.getElementById('modalidade_filtro');
+    const alunoSelect = document.getElementById('aluno_filtro'); 
+    const modalidadeTables = document.querySelectorAll('.modalidade-table');
+    const saveButtonContainer = document.getElementById('saveButtonContainer'); 
+    const saveButton = saveButtonContainer ? saveButtonContainer.querySelector('button') : null;
+    
+    // Elementos ocultos para enviar o estado do filtro no POST
+    const modalidadeFiltroOculto = document.getElementById('modalidade_filtro_oculto');
+    const alunoFiltroOculto = document.getElementById('aluno_filtro_oculto');
+    const generoFiltroOculto = document.getElementById('genero_filtro_oculto');
 
-    generoSelect.addEventListener('change', function () {
-        const generoSelecionado = generoSelect.value;
 
-        resolucaoRows.forEach(function (row) {
-            const generoAluno = row.getAttribute('data-genero');
-            if (generoSelecionado === 'todos' || generoSelecionado === generoAluno) {
-                row.style.display = 'table-row';
-            } else {
-                row.style.display = 'none';
+    // JSON dos alunos e dos vínculos para uso no JS
+    const todosOsAlunos = <?php echo json_encode($todosOsAlunos); ?>;
+    const vinculosExistentes = <?php echo json_encode($vinculosJson); ?>;
+
+    /**
+     * 1. Filtra o seletor de alunos com base na modalidade e gênero.
+     */
+    function filtrarAlunos() {
+        const modalidadeId = modalidadeSelect.value;
+        const genero = generoSelect.value;
+        const alunoSelecionadoAnterior = '<?php echo $alunoSelecionado; ?>'; // Valor do PHP/Sessão
+        
+        // Limpa e desabilita o seletor de alunos se não houver modalidade selecionada
+        alunoSelect.innerHTML = '<option value="">Selecione um aluno</option>';
+        alunoSelect.disabled = modalidadeId === 'todos';
+        
+        if (modalidadeId === 'todos') {
+            exibirLinhaAluno(); 
+            return;
+        }
+
+        let alunoAindaDisponivel = false;
+
+        // Popula o seletor de aluno
+        todosOsAlunos.forEach(aluno => {
+            const alunoIdString = String(aluno.id); 
+            const sexoString = String(aluno.sexo);
+            
+            const alunosDaModalidade = vinculosExistentes[modalidadeId];
+            
+            const isVinculado = alunosDaModalidade && alunosDaModalidade[alunoIdString]; 
+            const isGeneroCorreto = genero === 'todos' || genero === sexoString; 
+
+            if (isVinculado && isGeneroCorreto) {
+                const option = document.createElement('option');
+                option.value = alunoIdString;
+                option.textContent = aluno.nome;
+                alunoSelect.appendChild(option);
+                
+                if (alunoIdString === alunoSelecionadoAnterior) {
+                    alunoAindaDisponivel = true;
+                }
             }
         });
 
-        // Ocultar tabelas vazias
-        const modalidadeTables = document.querySelectorAll('.modalidade-table');
-        modalidadeTables.forEach(function (table) {
-            const rows = table.querySelectorAll('.resolucao-row');
-            let hasVisibleRows = false;
-            rows.forEach(function (row) {
-                if (row.style.display !== 'none') {
-                    hasVisibleRows = true;
-                }
-            });
+        // Tenta manter a seleção anterior do aluno, se aplicável
+        if (alunoAindaDisponivel) {
+             alunoSelect.value = alunoSelecionadoAnterior;
+        } else {
+             alunoSelect.value = ''; // Reseta se o aluno não estiver mais na lista/filtro
+        }
+        
+        exibirLinhaAluno();
+    }
 
-            // Ocultar tabela e seu título se não houver linhas visíveis
-            const tableTitle = table.previousElementSibling;
-            if (hasVisibleRows) {
+    /**
+     * 2. Exibe APENAS a linha de input do aluno e modalidade selecionados e controla o botão Salvar.
+     */
+    function exibirLinhaAluno() {
+        const alunoIdSelecionado = alunoSelect.value.trim(); 
+        const modalidadeIdSelecionada = modalidadeSelect.value.trim();
+        const generoIdSelecionado = generoSelect.value.trim(); 
+
+        // Grava os valores atuais nos campos ocultos, que serão enviados no POST ou usados no GET
+        modalidadeFiltroOculto.value = modalidadeIdSelecionada;
+        alunoFiltroOculto.value = alunoIdSelecionado;
+        generoFiltroOculto.value = generoIdSelecionado; 
+        
+        // Controla a visibilidade do botão Salvar.
+        if (saveButtonContainer) {
+            const deveEstarVisivel = modalidadeIdSelecionada !== 'todos' && alunoIdSelecionado !== '';
+            
+            saveButtonContainer.style.display = deveEstarVisivel ? 'block' : 'none';
+            
+            if (saveButton) {
+                 saveButton.disabled = !deveEstarVisivel;
+            }
+        }
+
+        modalidadeTables.forEach(function (table) {
+            const modalidadeId = table.getAttribute('data-modalidade-id');
+            const tableTitle = document.getElementById('title-modalidade-' + modalidadeId);
+            const rows = table.querySelectorAll('.resolucao-row');
+
+            // 1. Oculta/Exibe a Tabela:
+            const tabelaDeveSerVisivel = modalidadeId == modalidadeIdSelecionada && alunoIdSelecionado !== '';
+            
+            if (tabelaDeveSerVisivel) {
                 table.style.display = 'table';
-                if (tableTitle && tableTitle.classList.contains('modalidade-title')) {
-                    tableTitle.style.display = 'block';
-                }
+                if (tableTitle) tableTitle.style.display = 'block';
             } else {
                 table.style.display = 'none';
-                if (tableTitle && tableTitle.classList.contains('modalidade-title')) {
-                    tableTitle.style.display = 'none';
-                }
+                if (tableTitle) tableTitle.style.display = 'none';
             }
-        });
-    });
 
-    // Inicialize a filtragem com base no gênero selecionado
-    generoSelect.dispatchEvent(new Event('change'));
+            // 2. Oculta/Exibe/Habilita a Linha do Aluno:
+            rows.forEach(function (row) {
+                const alunoIdDaLinha = row.getAttribute('data-aluno-id'); 
+                const inputs = row.querySelectorAll('input[type="text"]');
+                
+                if (tabelaDeveSerVisivel && alunoIdDaLinha === alunoIdSelecionado) { 
+                    row.style.display = 'table-row';
+                    // HABILITA: APENAS esses 5 inputs serão enviados no POST
+                    inputs.forEach(input => input.disabled = false); 
+                } else {
+                    row.style.display = 'none';
+                    // DESABILITA: Garante que os inputs de outros alunos não sejam enviados
+                    inputs.forEach(input => input.disabled = true); 
+                }
+            });
+        });
+    }
+
+    // Adicionar listeners para os filtros
+    generoSelect.addEventListener('change', filtrarAlunos);
+    modalidadeSelect.addEventListener('change', filtrarAlunos);
+    alunoSelect.addEventListener('change', exibirLinhaAluno); 
+
+    // Inicialize a filtragem
+    // Use setTimeout para garantir que a seleção do aluno ocorra DEPOIS que as opções forem populadas
+    setTimeout(filtrarAlunos, 50); 
 });
 </script>
 </head>
 <body>
     <div class="container">
         <h2 class="mt-4 mb-4">Formulário de Resoluções</h2>
-        <form action="processa_solvers.php" method="post">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <label for="genero" class="input-group-text">Filtrar por gênero:</label>
-                            </div>
-                            <select class="custom-select" id="genero" name="genero">
-                                <option value="1" selected>Masculino</option>
-                                <option value="2">Feminino</option>
-                            </select>
+        
+        <?php if (!empty($statusMessage)): ?>
+            <div class="alert alert-<?php echo htmlspecialchars($statusMessage['type']); ?> alert-dismissible fade show" role="alert">
+                <?php echo htmlspecialchars($statusMessage['text']); ?>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        <?php endif; ?>
+        
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <label for="genero" class="input-group-text">Gênero:</label>
                         </div>
+                        <select class="custom-select" id="genero" name="genero">
+                            <option value="todos" <?php if ($generoSelecionado === 'todos') echo 'selected'; ?>>Todos</option>
+                            <option value="1" <?php if ($generoSelecionado === '1') echo 'selected'; ?>>Masculino</option>
+                            <option value="2" <?php if ($generoSelecionado === '2') echo 'selected'; ?>>Feminino</option>
+                        </select>
                     </div>
                 </div>
             </div>
-        </form>
+            
+            <div class="col-md-4">
+                <div class="form-group">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <label for="modalidade_filtro" class="input-group-text">Modalidade:</label>
+                        </div>
+                        <select class="custom-select" id="modalidade_filtro" name="modalidade_filtro">
+                            <option value="todos" <?php if ($modalidadeSelecionada === 'todos') echo 'selected'; ?>>Todas</option>
+                            <?php foreach ($modalidadesParaFiltro as $modalidade_f): ?>
+                                <option value="<?php echo $modalidade_f['id']; ?>" <?php if ($modalidadeSelecionada == $modalidade_f['id']) echo 'selected'; ?>>
+                                    <?php echo htmlspecialchars($modalidade_f['nome']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="form-group">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <label for="aluno_filtro" class="input-group-text">Aluno:</label>
+                        </div>
+                        <select class="custom-select" id="aluno_filtro" name="aluno_filtro" <?php echo ($modalidadeSelecionada === 'todos') ? 'disabled' : ''; ?>>
+                            <option value="">Selecione um aluno</option>
+                            <?php if (!empty($alunoSelecionado)): ?>
+                                <option value="<?php echo htmlspecialchars($alunoSelecionado); ?>" selected>
+                                    <?php 
+                                        $alunoObj = array_filter($todosOsAlunos, fn($a) => $a['id'] == $alunoSelecionado);
+                                        echo htmlspecialchars($alunoObj ? array_values($alunoObj)[0]['nome'] : 'Carregando...');
+                                    ?>
+                                </option>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
         <form action="processa_solvers.php" method="post">
+            
+            <input type="hidden" name="modalidade_filtro_oculto" id="modalidade_filtro_oculto" value="<?php echo htmlspecialchars($modalidadeSelecionada); ?>">
+            <input type="hidden" name="aluno_filtro_oculto" id="aluno_filtro_oculto" value="<?php echo htmlspecialchars($alunoSelecionado); ?>">
+            <input type="hidden" name="genero_filtro_oculto" id="genero_filtro_oculto" value="<?php echo htmlspecialchars($generoSelecionado); ?>">
+            
             <?php
-            // Recupere a lista de modalidades do banco de dados
+            // Lógica de exibição das tabelas
             $modalidades = obterModalidades();
-
-            // Recupere a lista de alunos do banco de dados
             $alunos = obterAlunos();
-
-            // Recupere os vínculos de alunos com modalidades do banco de dados
-            $vinculos = obterVinculosAlunosModalidades();
-
-            // Crie uma matriz associativa para facilitar a verificação de vínculos
+            
+            // Reconstroi os vínculos para o HTML/PHP
             $vinculosExistentes = [];
             foreach ($vinculos as $vinculo) {
-                $alunoId = $vinculo['aluno'];
-                $modalidadeId = $vinculo['modalidade'];
-                $vinculosExistentes[$modalidadeId][$alunoId] = true;
+                $modalidadeKey = (string)$vinculo['modalidade'];
+                $alunoKey = (string)$vinculo['aluno'];
+                if (!isset($vinculosExistentes[$modalidadeKey])) {
+                     $vinculosExistentes[$modalidadeKey] = [];
+                }
+                $vinculosExistentes[$modalidadeKey][$alunoKey] = true;
             }
 
-            // Exiba os campos do formulário
+            // Exibe os campos do formulário (ocultos por padrão)
             foreach ($modalidades as $modalidade) {
                 $modalidadeId = $modalidade['id'];
-                // Verifique se existem resoluções para esta modalidade
+                
                 if (isset($vinculosExistentes[$modalidadeId]) && count($vinculosExistentes[$modalidadeId]) > 0) {
-                    echo '<h3 class="modalidade-title">' . $modalidade['nome'] . '</h3>';
-                    echo '<table class="table table-striped modalidade-table">';
+                    echo '<h3 class="modalidade-title" id="title-modalidade-' . $modalidadeId . '" style="display:none;">' . htmlspecialchars($modalidade['nome']) . '</h3>';
+                    echo '<table class="table table-striped modalidade-table" data-modalidade-id="' . $modalidadeId . '" style="display:none;">';
                     echo '<thead>';
                     echo '<tr>';
                     echo '<th>Aluno</th>';
@@ -152,17 +374,23 @@ document.addEventListener("DOMContentLoaded", function () {
                     echo '</tr>';
                     echo '</thead>';
                     echo '<tbody>';
+                    
                     foreach ($alunos as $aluno) {
                         $alunoId = $aluno['id'];
-                        // Verifique se existe um vínculo para esta combinação de aluno e modalidade
+                        
                         if (isset($vinculosExistentes[$modalidadeId][$alunoId])) {
-                            echo '<tr class="resolucao-row" data-genero="' . $aluno['sexo'] . '">';
-                            echo '<td>' . $aluno['nome'] . '</td>';
+                            // Linha oculta e desabilitada por padrão.
+                            echo '<tr class="resolucao-row" data-genero="' . htmlspecialchars($aluno['sexo']) . '" data-aluno-id="' . $alunoId . '" style="display:none;">';
+                            echo '<td>' . htmlspecialchars($aluno['nome']) . '</td>';
+                            
+                            // CHAVE: Reconsulta o valor mais recente do DB no momento do carregamento da página
                             $valoresSolverExistente = obterValoresSolverExistente($modalidadeId, $alunoId);
+                            
                             for ($i = 1; $i <= 5; $i++) {
                                 $inputName = "resolucoes[" . $modalidadeId . "][" . $alunoId . "][" . $i . "]";
-                                $valorExistente = $valoresSolverExistente ? $valoresSolverExistente["solver$i"] : ''; // Obtém o valor existente se disponível
-                                echo '<td><input type="text" name="' . $inputName . '" value="' . $valorExistente . '"></td>';
+                                $valorExistente = $valoresSolverExistente ? $valoresSolverExistente["solver$i"] : ''; 
+                                // Input desabilitado por padrão.
+                                echo '<td><input type="text" class="form-control form-control-sm" name="' . $inputName . '" value="' . htmlspecialchars($valorExistente) . '" disabled></td>'; 
                             }
                             echo '</tr>';
                         }
@@ -172,10 +400,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
             ?>
-            <button type="submit" class="btn btn-primary float-right">Salvar</button>
+            
+            <div id="saveButtonContainer" style="display: none;" class="float-right mb-4">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
         </form>
     </div>
-</body>
-
-
-<?php include '../includes/layout_bottom.php'; ?>
+    <?php include '../includes/layout_bottom.php'; ?>
