@@ -1,14 +1,16 @@
 <?php
 // ARQUIVO: header.php
 
-// 1. Inicia a sessão no topo, se necessário
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// 2. CORREÇÃO: Define a variável de controle.
-// Verifica se a chave 'usuario' (ou a que você usa para login) existe na sessão.
+// Verifica se há usuário logado
 $usuario_logado = isset($_SESSION['usuario']) && !empty($_SESSION['usuario']);
+
+// Pega o valor de superuser (0 = comum, 1 = master)
+$is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) : 0;
+
 ?>
 
 <nav class="navbar navbar-expand-lg navbar-wca" style="background-color: #DEDEDE !important; border-bottom: 1px solid #c0c0c0;">
@@ -22,35 +24,32 @@ $usuario_logado = isset($_SESSION['usuario']) && !empty($_SESSION['usuario']);
 
     <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav mr-auto">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="escolasDropdown" role="button" data-toggle="dropdown"
-                   aria-haspopup="true" aria-expanded="false">
-                   <i class="fa-solid fa-school"></i> Escolas
-                </a>
-                <div class="dropdown-menu" aria-labelledby="escolasDropdown">
-                    <a class="dropdown-item" href="#"><i class="fa-solid fa-plus"></i> Cadastrar Escola</a>
-                    <a class="dropdown-item" href="../public/lista_escolas.php"><i class="fa-solid fa-list"></i> Listar Escolas</a>
-                </div>
-            </li>
+
+            <?php if ($is_superuser): ?>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="escolasDropdown" role="button" data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">
+                       <i class="fa-solid fa-school"></i> Escolas
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="escolasDropdown">
+                        <a class="dropdown-item" href="../public/lista_escolas.php"><i class="fa-solid fa-list"></i> Listar Escolas</a>
+                    </div>
+                </li>
+            <?php endif; ?>
+
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="alunosDropdown" role="button" data-toggle="dropdown"
                    aria-haspopup="true" aria-expanded="false">
                    <i class="fa-solid fa-user-graduate"></i> Alunos
                 </a>
                 <div class="dropdown-menu" aria-labelledby="alunosDropdown">
-                    <a class="dropdown-item" href="../public/cadastro_alunos.php"><i class="fa-solid fa-user-plus"></i> Cadastrar Aluno</a>
-                    <a class="dropdown-item" href="#"><i class="fa-solid fa-users"></i> Listar Alunos</a>
+                    <?php if ($is_superuser): ?>
+                        <a class="dropdown-item" href="../public/cadastro_alunos.php"><i class="fa-solid fa-user-plus"></i> Cadastrar Aluno</a>
+                    <?php endif; ?>
+                    <a class="dropdown-item" href="../public/lista_alunos.php"><i class="fa-solid fa-users"></i> Listar Alunos</a>
                 </div>
             </li>
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="modalidadesDropdown" role="button" data-toggle="dropdown"
-                   aria-haspopup="true" aria-expanded="false">
-                   <i class="fa-solid fa-shuffle"></i> Modalidades
-                </a>
-                <div class="dropdown-menu" aria-labelledby="modalidadesDropdown">
-                    <a class="dropdown-item" href="../public/lista_modalidades.php"><i class="fa-solid fa-bars"></i> Listar Modalidades</a>
-                </div>
-            </li>
+
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="competicaoDropdown" role="button" data-toggle="dropdown"
                    aria-haspopup="true" aria-expanded="false">
@@ -62,6 +61,7 @@ $usuario_logado = isset($_SESSION['usuario']) && !empty($_SESSION['usuario']);
                     <a class="dropdown-item" href="../public/lista_resultados.php"><i class="fa-solid fa-chart-bar"></i> Resultados</a>
                 </div>
             </li>
+
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="administracaoDropdown" role="button" data-toggle="dropdown"
                    aria-haspopup="true" aria-expanded="false">
@@ -71,22 +71,35 @@ $usuario_logado = isset($_SESSION['usuario']) && !empty($_SESSION['usuario']);
                     <a class="dropdown-item" href="cadastro_usuarios.php"><i class="fa-solid fa-user-shield"></i> Usuários</a>
                 </div>
             </li>
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="dashDropdown" role="button" data-toggle="dropdown"
-                   aria-haspopup="true" aria-expanded="false">
-                   <i class="fa-solid fa-solid fa-house"></i> Análise de dados
-                </a>
-                <div class="dropdown-menu" aria-labelledby="dashDropdown">
-                    <a class="dropdown-item" href="../public/dash.php"><i class="fa-solid fa-solid fa-chart-line"></i> Dashboard</a>
-                </div>
-            </li>
+
+            <?php if ($is_superuser): ?>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="modalidadesDropdown" role="button" data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">
+                       <i class="fa-solid fa-shuffle"></i> Modalidades
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="modalidadesDropdown">
+                        <a class="dropdown-item" href="../public/lista_modalidades.php"><i class="fa-solid fa-bars"></i> Listar Modalidades</a>
+                    </div>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="dashDropdown" role="button" data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">
+                       <i class="fa-solid fa-house"></i> Análise de dados
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="dashDropdown">
+                        <a class="dropdown-item" href="../public/dash.php"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+                    </div>
+                </li>
+            <?php endif; ?>
         </ul>
     </div>
 
     <div class="d-flex">
         <?php if ($usuario_logado): ?>
             <span class="navbar-text text-dark mr-3 d-none d-lg-block">
-                 Bem vindo <b><?php echo obterNomeDoBancoDeDados($_SESSION['usuario']); ?></b>
+                Bem-vindo <b><?php echo obterNomeDoBancoDeDados($_SESSION['usuario']); ?></b>
             </span>
             <form class="form-inline" method="post" action="logout.php">
                 <button class="btn btn-outline-dark my-2 my-sm-0" type="submit">
@@ -99,5 +112,4 @@ $usuario_logado = isset($_SESSION['usuario']) && !empty($_SESSION['usuario']);
             </a>
         <?php endif; ?>
     </div>
-</nav>
 </nav>

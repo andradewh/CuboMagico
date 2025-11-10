@@ -105,7 +105,7 @@ $result = $pdo->query($sql);
                 <thead>
                     <tr>
                         <th scope="col" style="width: 5%;"></th> 
-                        <th scope="col">Cód.</th>
+                        <th scope="col">Código</th>
                         <th scope="col" style="text-align: left;">Nome da Modalidade</th>
                         <th scope="col" style="width: 10%;">Ativa</th>
                     </tr>

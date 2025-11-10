@@ -103,6 +103,7 @@ CREATE TABLE `usuarios` (
     `nome` varchar(255) NOT NULL,
     `email` varchar(255) NOT NULL,
     `senha` varchar(255) NOT NULL,
+    `superuser` TINYINT DEFAULT 0 NOT NULL
     PRIMARY KEY (`id`),
     UNIQUE KEY `email` (`email`)
  ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4;
@@ -167,3 +168,50 @@ BEGIN
 END;
 //
 DELIMITER ;
+
+
+/*view criada para análises exploratórias pós competição*/
+CREATE view unpivot_solvers AS (
+SELECT  aluno
+       ,modalidade
+       ,solver
+       ,tempo
+       ,situacao_solver
+FROM
+(
+	SELECT  aluno
+	       ,modalidade
+	       ,1 AS solver
+	       ,solver1 AS tempo
+	       ,if(solver1 = '',0,1) situacao_solver
+	FROM alunomodalidadesolver
+	UNION ALL
+	SELECT  aluno
+	       ,modalidade
+	       ,2 AS solver
+	       ,solver2 AS tempo
+	       ,if(solver2 = '',0,1) situacao_solver
+	FROM alunomodalidadesolver
+	UNION ALL
+	SELECT  aluno
+	       ,modalidade
+	       ,3 AS solver
+	       ,solver3 AS tempo
+	       ,if(solver3 = '',0,1) situacao_solver
+	FROM alunomodalidadesolver
+	UNION ALL
+	SELECT  aluno
+	       ,modalidade
+	       ,4 AS solver
+	       ,solver4 AS tempo
+	       ,if(solver4 = '',0,1) situacao_solver
+	FROM alunomodalidadesolver
+	UNION ALL
+	SELECT  aluno
+	       ,modalidade
+	       ,5 AS solver
+	       ,solver5 AS tempo
+	       ,if(solver5 = '',0,1) situacao_solver
+	FROM alunomodalidadesolver
+) resolucoes
+ORDER BY 2, 1, 3)

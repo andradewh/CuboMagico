@@ -63,13 +63,17 @@ function obterTodosOsValoresSolver() {
 }
 
 // ==========================================================
-// FUNÇÕES AUXILIARES E CRUD DE OUTRAS ENTIDADES (Mantidas)
+// FUNÇÕES AUXILIARES E CRUD DE OUTRAS ENTIDADES (Atualizadas)
 // ==========================================================
 
+/**
+ * Busca um usuário no banco de dados pelo seu ID, garantindo que a senha não seja exposta.
+ */
 function obterUsuarioPorId($id) {
     global $pdo; 
 
-    $sql = "SELECT * FROM usuarios WHERE id = :id";
+    // Seleciona todos os campos, EXCETO a senha
+    $sql = "SELECT id, nome, email FROM usuarios WHERE id = :id";
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
     $stmt->execute();
@@ -77,19 +81,40 @@ function obterUsuarioPorId($id) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function atualizarUsuario($id, $nome, $email) {
+/**
+ * Atualiza os dados (nome, email) e opcionalmente a senha de um usuário.
+ * * ATUALIZADO: Adicionada a lógica para hashing da senha com password_hash().
+ */
+function atualizarUsuario($id, $nome, $email, $novaSenha = null) {
     global $pdo;
+    
+    try {
+        if ($novaSenha !== null && !empty($novaSenha)) {
+            // Se uma nova senha for fornecida, faz o hash
+            $senhaHash = password_hash($novaSenha, PASSWORD_DEFAULT);
+            $sql = "UPDATE usuarios SET nome = :nome, email = :email, senha = :senha WHERE id = :id";
+            $stmt = $pdo->prepare($sql);
+            
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
+            $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+            $stmt->bindParam(':senha', $senhaHash, PDO::PARAM_STR);
 
-    $sql = "UPDATE usuarios SET nome = :nome, email = :email WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
+            return $stmt->execute();
+        } else {
+            // Caso contrário, atualiza apenas nome e email
+            $sql = "UPDATE usuarios SET nome = :nome, email = :email WHERE id = :id";
+            $stmt = $pdo->prepare($sql);
 
-    $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-    $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
-    $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->bindParam(':nome', $nome, PDO::PARAM_STR);
+            $stmt->bindParam(':email', $email, PDO::PARAM_STR);
 
-    if ($stmt->execute()) {
-        return true;
-    } else {
+            return $stmt->execute();
+        }
+    } catch (PDOException $e) {
+        // Log de erro
+        error_log("Erro ao atualizar usuário: " . $e->getMessage());
         return false;
     }
 }
@@ -113,8 +138,8 @@ function obterAlunoPorId($id) {
     global $pdo; 
 
     $sql = "SELECT alunos.id, alunos.nome, alunos.idade, alunos.sexo, alunos.escola
-             from cubomagico.alunos 
-             WHERE alunos.id = :id";
+              from cubomagico.alunos 
+              WHERE alunos.id = :id";
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
     $stmt->execute();
