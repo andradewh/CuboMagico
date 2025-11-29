@@ -25,12 +25,12 @@ if (isset($_POST['id'])) {
         $sexo = $aluno['sexo'];
         $escola = $aluno['escola'];
     } else {
-        // Aluno não encontrado, redirecione ou mostre uma mensagem de erro
-        echo 'Aluno não encontrado.';
+        // competidor não encontrado, redirecione ou mostre uma mensagem de erro
+        echo 'competidor não encontrado.';
     }
 } else {
-    // ID do aluno não foi fornecido, redirecione ou mostre uma mensagem de erro
-    echo 'ID do Aluno não fornecido.';
+    // ID do competidor não foi fornecido, redirecione ou mostre uma mensagem de erro
+    echo 'ID do competidor não fornecido.';
 }
 
 // Consulta SQL para obter as escolas
@@ -58,7 +58,7 @@ $sexos = $stmtSexos->fetchAll(PDO::FETCH_ASSOC);
             <input type="text" name="nome" id="nome" class="form-control" placeholder="Nome" value="<?= $nome; ?>" required>
         </div>
         <div class="form-group">
-        <label for="selectField">Escola</label>
+        <label for="selectField">Instituição de Ensino</label>
         <select id="escola" name="escola" class="custom-select">
             <?php foreach ($escolas as $escola): ?>
                 <option value="<?= $escola['id']; ?>" <?= ($escola['id'] == $escola ? 'selected' : ''); ?>>

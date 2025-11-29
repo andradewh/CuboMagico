@@ -32,14 +32,14 @@ $result_list = $pdo->query($sql_list);
             <div class="col-md-6">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title text-center">Cadastro de Alunos</h5>
+                        <h5 class="card-title text-center">Cadastro de Competidores</h5>
                         <form action="processa_cadastro_alunos.php" method="post">
                             <div class="form-group">
                                 <label for="nome">Nome</label>
                                 <input type="text" name="nome" id="nome" class="form-control" placeholder="Nome" required>
                             </div>
                             <div class="form-group">
-                            <label for="selectField">Escola</label>
+                            <label for="selectField">Instituição de Ensino</label>
                                 <select name="escola" class="custom-select" label="escola">
                                     <?php
                                     if($result){
@@ -77,7 +77,7 @@ $result_list = $pdo->query($sql_list);
                     <th scope="col">Nome</th>
                     <th scope="col">Idade</th>
                     <th scope="col">Sexo</th>
-                    <th scope="col">Escola</th>
+                    <th scope="col">Instituição de Ensino</th>
                     <th scope="col">...</th>
                 </tr>
             </thead>

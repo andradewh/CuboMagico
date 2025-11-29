@@ -36,32 +36,34 @@ $result = $pdo->query($sql);
 <?php include '../includes/layout_top.php'; ?>
 <?php include '../includes/header.php'; ?>
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title text-center">Cadastro de Usuário</h5>
-                    <form action="processa_cadastro_usuarios.php" method="post">
-                        <div class="form-group">
-                            <label for="nome">Nome</label>
-                            <input type="text" name="nome" id="nome" class="form-control" placeholder="Nome" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" name="email" id="email" class="form-control" placeholder="Email" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="senha">Senha</label>
-                            <input type="password" name="senha" id="senha" class="form-control" placeholder="Senha" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-block">Cadastrar</button>
-                    </form>
+<?php if ($is_superuser): ?>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Cadastro de Usuário</h5>
+                        <form action="processa_cadastro_usuarios.php" method="post">
+                            <div class="form-group">
+                                <label for="nome">Nome</label>
+                                <input type="text" name="nome" id="nome" class="form-control" placeholder="Nome" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" name="email" id="email" class="form-control" placeholder="Email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="senha">Senha</label>
+                                <input type="password" name="senha" id="senha" class="form-control" placeholder="Senha" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Cadastrar</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+<?php endif; ?>
 
 <div class="m-5">
     <h3 class="mb-3">Lista de Usuários</h3>

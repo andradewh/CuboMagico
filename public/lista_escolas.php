@@ -22,7 +22,7 @@ $result = $pdo->query($sql);
 <div class="d-flex justify-content-center">
     <div class="w-50 align-items-center text-center border" style="border-width: 2px !important; padding: 20px; margin-top: 20px;">
         <div class="titulo-container">
-            <h1>Escolas</h1>
+            <h1>Instituições de Ensino</h1>
         </div>
         <table id="escolasTable" class="table table-hover table-wca table-striped"> 
             <thead>

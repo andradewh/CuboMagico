@@ -25,7 +25,7 @@ $modalidades = $stmtModalidades->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <body>
     <div class="container">
-        <h2 class="mt-4 mb-4">Vincular Alunos a Modalidades</h2>
+        <h2 class="mt-4 mb-4">Vincular Competidores a Modalidades</h2>
         <div class="content-margin">
             <form action="processa_edicao_aluno_modalidade.php" method="post">
                 <table class="table table-striped">

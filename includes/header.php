@@ -29,10 +29,10 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="escolasDropdown" role="button" data-toggle="dropdown"
                        aria-haspopup="true" aria-expanded="false">
-                       <i class="fa-solid fa-school"></i> Escolas
+                       <i class="fa-solid fa-school"></i> Instituições de Ensino
                     </a>
                     <div class="dropdown-menu" aria-labelledby="escolasDropdown">
-                        <a class="dropdown-item" href="../public/lista_escolas.php"><i class="fa-solid fa-list"></i> Listar Escolas</a>
+                        <a class="dropdown-item" href="../public/lista_escolas.php"><i class="fa-solid fa-list"></i> Listar Instituições de Ensino</a>
                     </div>
                 </li>
             <?php endif; ?>
@@ -40,13 +40,13 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="alunosDropdown" role="button" data-toggle="dropdown"
                    aria-haspopup="true" aria-expanded="false">
-                   <i class="fa-solid fa-user-graduate"></i> Alunos
+                   <i class="fa-solid fa-football"></i> Competidores
                 </a>
                 <div class="dropdown-menu" aria-labelledby="alunosDropdown">
                     <?php if ($is_superuser): ?>
-                        <a class="dropdown-item" href="../public/cadastro_alunos.php"><i class="fa-solid fa-user-plus"></i> Cadastrar Aluno</a>
+                        <a class="dropdown-item" href="../public/cadastro_alunos.php"><i class="fa-solid fa-user-plus"></i> Cadastrar Competidores</a>
                     <?php endif; ?>
-                    <a class="dropdown-item" href="../public/lista_alunos.php"><i class="fa-solid fa-users"></i> Listar Alunos</a>
+                    <a class="dropdown-item" href="../public/lista_alunos.php"><i class="fa-solid fa-users"></i> Listar Competidores</a>
                 </div>
             </li>
 
@@ -56,19 +56,9 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
                    <i class="fa-solid fa-trophy"></i> Competição
                 </a>
                 <div class="dropdown-menu" aria-labelledby="competicaoDropdown">
-                    <a class="dropdown-item" href="../public/edicao_alunos_modalidades.php"><i class="fa-solid fa-link"></i> Vincular Alunos/Modalidades</a>
+                    <a class="dropdown-item" href="../public/edicao_alunos_modalidades.php"><i class="fa-solid fa-link"></i> Vincular Competidores/Modalidades</a>
                     <a class="dropdown-item" href="../public/edicao_alunos_modalidades_resultados.php"><i class="fa-solid fa-input-text"></i> Inserir Resultados</a>
-                    <a class="dropdown-item" href="../public/lista_resultados.php"><i class="fa-solid fa-chart-bar"></i> Resultados</a>
-                </div>
-            </li>
-
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="administracaoDropdown" role="button" data-toggle="dropdown"
-                   aria-haspopup="true" aria-expanded="false">
-                   <i class="fa-solid fa-users-gear"></i> Administração
-                </a>
-                <div class="dropdown-menu" aria-labelledby="administracaoDropdown">
-                    <a class="dropdown-item" href="cadastro_usuarios.php"><i class="fa-solid fa-user-shield"></i> Usuários</a>
+                    <a class="dropdown-item" href="../public/lista_resultados.php"><i class="fa-solid fa-medal"></i> Resultados</a>
                 </div>
             </li>
 
@@ -93,6 +83,16 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
                     </div>
                 </li>
             <?php endif; ?>
+
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="administracaoDropdown" role="button" data-toggle="dropdown"
+                   aria-haspopup="true" aria-expanded="false">
+                   <i class="fa-solid fa-users-gear"></i> Administração
+                </a>
+                <div class="dropdown-menu" aria-labelledby="administracaoDropdown">
+                    <a class="dropdown-item" href="cadastro_usuarios.php"><i class="fa-solid fa-user-shield"></i> Usuários</a>
+                </div>
+            </li>
         </ul>
     </div>
 

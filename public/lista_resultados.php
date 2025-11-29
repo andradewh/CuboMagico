@@ -288,7 +288,7 @@ while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
 ?>
 
 <main class="container">
-    <title>Ranking de Alunos por Modalidade, Sexo e Faixa Etária</title>
+    <title>Ranking de Competidores por Modalidade, Sexo e Faixa Etária</title>
     <style>
         /* AJUSTE DE LARGURA SOLICITADO */
         .ranking-table th, .ranking-table td {
@@ -443,7 +443,7 @@ while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
                         <thead>
                             <tr>
                                 <th>Colocação</th>
-                                <th>Aluno</th>
+                                <th>Competidor</th>
                                 <th>Melhor</th> 
                                 <th>Média</th>
                                 <th>S1</th>

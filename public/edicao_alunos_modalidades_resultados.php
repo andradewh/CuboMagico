@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const alunoSelecionadoAnterior = '<?php echo $alunoSelecionado; ?>'; // Valor do PHP/Sessão
         
         // Limpa e desabilita o seletor de alunos se não houver modalidade selecionada
-        alunoSelect.innerHTML = '<option value="">Selecione um aluno</option>';
+        alunoSelect.innerHTML = '<option value="">Selecione um competidor</option>';
         alunoSelect.disabled = modalidadeId === 'todos';
         
         if (modalidadeId === 'todos') {
