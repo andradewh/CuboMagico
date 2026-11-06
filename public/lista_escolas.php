@@ -19,43 +19,53 @@ $sql = "select * from escolas";
 $result = $pdo->query($sql);
 
 ?>
-<div class="d-flex justify-content-center">
-    <div class="w-50 align-items-center text-center border" style="border-width: 2px !important; padding: 20px; margin-top: 20px;">
-        <div class="titulo-container">
-            <h1>Instituições de Ensino</h1>
+
+<div class="container my-5">
+    <!-- Cabeçalho da Página com Título e Ações Opcionais -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fa-solid fa-school text-primary mr-2"></i> Instituições de Ensino</h2>
+            <p class="text-muted mb-0">Lista de escolas cadastradas no sistema de competições.</p>
         </div>
-        <table id="escolasTable" class="table table-hover table-wca table-striped"> 
-            <thead>
-                <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">Nome</th>
-                    <th scope="col">Cidade/UF</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php
-                    while ($mod_data = $result->fetch(PDO::FETCH_ASSOC)) {
-                        echo "<tr>";
-                        echo "<td>".$mod_data['id']."</td>";
-                        echo "<td>".$mod_data['nome']."</td>";
-                        echo "<td>".$mod_data['cidade']."</td>";
-                        echo "</tr>";
-                    }
-                ?>
-            </tbody>
-        </table>
+    </div>
+
+    <!-- Card Principal Moderno -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table id="escolasTable" class="table table-hover table-striped align-middle w-100">
+                    <thead class="thead-light">
+                        <tr>
+                            <th scope="col" style="width: 80px;">#</th>
+                            <th scope="col">Nome da Instituição</th>
+                            <th scope="col" style="width: 200px;">Cidade/UF</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                            while ($mod_data = $result->fetch(PDO::FETCH_ASSOC)) {
+                                echo "<tr>";
+                                echo "<td class='font-weight-bold text-secondary'>".$mod_data['id']."</td>";
+                                echo "<td>".htmlspecialchars($mod_data['nome'], ENT_QUOTES, 'UTF-8')."</td>";
+                                echo "<td><span class='badge badge-light border px-2 py-1'>".htmlspecialchars($mod_data['cidade'], ENT_QUOTES, 'UTF-8')."</span></td>";
+                                echo "</tr>";
+                            }
+                        ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // Mantenha os scripts aqui, mas remova os links de Jquery e DataTables da HEAD
     $(document).ready(function() {
         $('#escolasTable').DataTable({
             "language": {
                 "sSearch": "Pesquisar:",
                 "lengthMenu": "Exibir _MENU_ registros por página",
                 "zeroRecords": "Nenhum registro encontrado",
-                "info": "Página _PAGE_ de _PAGES_",
+                "info": "Mostrando página _PAGE_ de _PAGES_",
                 "infoEmpty": "Nenhum registro disponível",
                 "infoFiltered": "(Filtrados de _MAX_ registros totais)",
                 "oPaginate": {
@@ -64,7 +74,9 @@ $result = $pdo->query($sql);
                     "sNext": "Próxima",
                     "sPrevious": "Anterior"
                 }
-            }
+            },
+            "dom": '<"row mb-3"<"col-md-6"l><"col-md-6"f>>rt<"row mt-3"<"col-md-6"i><"col-md-6"p>>',
+            "pageLength": 10
         });
     });
 </script>

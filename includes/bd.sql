@@ -227,3 +227,12 @@ CREATE TABLE eventos (
     CONSTRAINT chk_eventos_status
         CHECK (status IN (0, 1))
 );
+
+alter table alunos add column id_evento bigint;
+
+
+ALTER TABLE usuarios
+ADD COLUMN id_evento INT NULL,
+ADD CONSTRAINT fk_usuarios_eventos
+    FOREIGN KEY (id_evento)
+    REFERENCES eventos(id);

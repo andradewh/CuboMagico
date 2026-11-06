@@ -29,10 +29,38 @@ function obterModalidades() {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function obterAlunos() {
+function obterAlunos($id_evento = null) {
     global $pdo;
-    $stmt = $pdo->query("SELECT * FROM alunos");
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Se o id_evento não foi passado como parâmetro, tenta obter do usuário logado na sessão
+    if ($id_evento === null && isset($_SESSION['usuario'])) {
+        $usuarioLogado = $_SESSION['usuario'];
+        $userId = is_array($usuarioLogado) ? ($usuarioLogado['id'] ?? null) : null;
+        $userEmail = is_array($usuarioLogado) ? ($usuarioLogado['email'] ?? null) : $usuarioLogado;
+
+        if ($userId || $userEmail) {
+            $stmtUser = $pdo->prepare("SELECT id_evento, superuser FROM usuarios WHERE id = ? OR email = ?");
+            $stmtUser->execute([$userId, $userEmail]);
+            $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+            // Se o usuário tem um evento vinculado e NÃO é superuser master global, usamos o id_evento dele
+            if ($userData && !empty($userData['id_evento'])) {
+                $id_evento = $userData['id_evento'];
+            }
+        }
+    }
+
+    // Realiza a consulta com ou sem o filtro de evento
+    if ($id_evento !== null) {
+        $stmt = $pdo->prepare("SELECT * FROM alunos WHERE id_evento = :id_evento");
+        $stmt->bindParam(':id_evento', $id_evento, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        // Fallback caso seja superuser sem evento vinculado ou sem sessão ativa
+        $stmt = $pdo->query("SELECT * FROM alunos");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 
 function obterVinculosAlunosModalidades() {
@@ -43,16 +71,25 @@ function obterVinculosAlunosModalidades() {
 
 /**
  * FUNÇÃO OTIMIZADA para carregar todos os dados de solvers em uma única consulta.
- * Isso substitui a chamada repetitiva de obterValoresSolverExistente()
- * e resolve o problema N+1 Query.
+ * Opcionalmente filtrada por evento se juntarmos com a tabela de alunos.
  */
-function obterTodosOsValoresSolver() {
+function obterTodosOsValoresSolver($id_evento = null) {
     global $pdo;
-    // Seleciona todos os campos de solver
-    $stmt = $pdo->query("SELECT aluno, modalidade, solver1, solver2, solver3, solver4, solver5 FROM alunomodalidadesolver");
+    
+    if ($id_evento !== null) {
+        $sql = "SELECT ams.aluno, ams.modalidade, ams.solver1, ams.solver2, ams.solver3, ams.solver4, ams.solver5 
+                FROM alunomodalidadesolver ams
+                INNER JOIN alunos a ON ams.aluno = a.id
+                WHERE a.id_evento = :id_evento";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindParam(':id_evento', $id_evento, PDO::PARAM_INT);
+        $stmt->execute();
+    } else {
+        $stmt = $pdo->query("SELECT aluno, modalidade, solver1, solver2, solver3, solver4, solver5 FROM alunomodalidadesolver");
+    }
+
     $resultados = [];
     
-    // Organiza os resultados em um array multidimensional por [modalidade][aluno]
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $modalidadeId = $row['modalidade'];
         $alunoId = $row['aluno'];
@@ -66,13 +103,9 @@ function obterTodosOsValoresSolver() {
 // FUNÇÕES AUXILIARES E CRUD DE OUTRAS ENTIDADES (Atualizadas)
 // ==========================================================
 
-/**
- * Busca um usuário no banco de dados pelo seu ID, garantindo que a senha não seja exposta.
- */
 function obterUsuarioPorId($id) {
     global $pdo;
 
-    // Seleciona os campos, EXCETO a senha
     $sql = "
         SELECT id, nome, email, id_evento
         FROM usuarios
@@ -86,16 +119,11 @@ function obterUsuarioPorId($id) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-/**
- * Atualiza os dados (nome, email) e opcionalmente a senha de um usuário.
- * * ATUALIZADO: Adicionada a lógica para hashing da senha com password_hash().
- */
 function atualizarUsuario($id, $nome, $email, $novaSenha = null) {
     global $pdo;
     
     try {
         if ($novaSenha !== null && !empty($novaSenha)) {
-            // Se uma nova senha for fornecida, faz o hash
             $senhaHash = password_hash($novaSenha, PASSWORD_DEFAULT);
             $sql = "UPDATE usuarios SET nome = :nome, email = :email, senha = :senha WHERE id = :id";
             $stmt = $pdo->prepare($sql);
@@ -107,7 +135,6 @@ function atualizarUsuario($id, $nome, $email, $novaSenha = null) {
 
             return $stmt->execute();
         } else {
-            // Caso contrário, atualiza apenas nome e email
             $sql = "UPDATE usuarios SET nome = :nome, email = :email WHERE id = :id";
             $stmt = $pdo->prepare($sql);
 
@@ -118,7 +145,6 @@ function atualizarUsuario($id, $nome, $email, $novaSenha = null) {
             return $stmt->execute();
         }
     } catch (PDOException $e) {
-        // Log de erro
         error_log("Erro ao atualizar usuário: " . $e->getMessage());
         return false;
     }
@@ -132,19 +158,15 @@ function deletaUsuario($id) {
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 
-    if ($stmt->execute()) {
-        return true;
-    } else {
-        return false;
-    }
+    return $stmt->execute();
 }
 
 function obterAlunoPorId($id) {
     global $pdo; 
 
-    $sql = "SELECT alunos.id, alunos.nome, alunos.idade, alunos.sexo, alunos.escola
-              from cubomagico.alunos 
-              WHERE alunos.id = :id";
+    $sql = "SELECT alunos.id, alunos.nome, alunos.idade, alunos.sexo, alunos.escola, alunos.id_evento
+            FROM alunos 
+            WHERE alunos.id = :id";
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
     $stmt->execute();
@@ -152,10 +174,10 @@ function obterAlunoPorId($id) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function atualizarAluno($id, $nome, $idade, $sexo, $escola) {
+function atualizarAluno($id, $nome, $idade, $sexo, $escola, $id_evento) {
     global $pdo;
 
-    $sql = "UPDATE alunos SET nome = :nome, idade = :idade, sexo = :sexo, escola = :escola WHERE id = :id";
+    $sql = "UPDATE alunos SET nome = :nome, idade = :idade, sexo = :sexo, escola = :escola, id_evento = :id_evento WHERE id = :id";
     $stmt = $pdo->prepare($sql);
 
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
@@ -163,15 +185,13 @@ function atualizarAluno($id, $nome, $idade, $sexo, $escola) {
     $stmt->bindParam(':idade', $idade, PDO::PARAM_INT);
     $stmt->bindParam(':sexo', $sexo, PDO::PARAM_INT);
     $stmt->bindParam(':escola', $escola, PDO::PARAM_INT);
+    $stmt->bindParam(':id_evento', $id_evento, PDO::PARAM_INT);
 
     if ($stmt->execute()) {
-        $log_message = "Atualização bem-sucedida para o aluno com ID: $id";
-        error_log($log_message);
         return true;
     } else {
         $error_info = $stmt->errorInfo();
-        $log_message = "Falha na atualização para o aluno com ID: $id. Erro: " . $error_info[2];
-        error_log($log_message);
+        error_log("Falha na atualização para o aluno com ID: $id. Erro: " . $error_info[2]);
         return false;
     }
 }
@@ -183,23 +203,17 @@ function deletaAluno($id) {
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 
-    if ($stmt->execute()) {
-        return true;
-    } else {
-        return false;
-    }
+    return $stmt->execute();
 }
 
 function inserirVinculoAlunoModalidade($alunoId, $modalidadesSelecionadas) {
     global $pdo;
 
-    // Exclua os registros existentes para o aluno
     $sqlExcluir = "DELETE FROM alunomodalidade WHERE aluno = :alunoId";
     $stmtExcluir = $pdo->prepare($sqlExcluir);
     $stmtExcluir->bindParam(':alunoId', $alunoId, PDO::PARAM_INT);
     $stmtExcluir->execute();
 
-    // Insira os novos registros na tabela alunomodalidade
     foreach ($modalidadesSelecionadas as $modalidadeId => $value) {
         $sqlInserir = "INSERT INTO alunomodalidade (aluno, modalidade) VALUES (:alunoId, :modalidadeId)";
         $stmtInserir = $pdo->prepare($sqlInserir);
@@ -219,17 +233,11 @@ function obterVinculosExistentes($alunoId) {
     $stmt->bindParam(':alunoId', $alunoId, PDO::PARAM_INT);
     $stmt->execute();
 
-    $vinculos = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-    return $vinculos;
+    return $stmt->fetchAll(PDO::FETCH_COLUMN);
 }
 
 function validarFormatoTempo($tempo) {
-    // O padrão da expressão regular corresponde a "01:30.55"
     $padrao = "/^\d{2}:\d{2}\.\d{2}$/";
     return preg_match($padrao, $tempo) === 1;
 }
-
-// A função obterValoresSolverExistente() foi removida daqui e substituída pela função obterTodosOsValoresSolver()
-// que é mais eficiente.
 ?>

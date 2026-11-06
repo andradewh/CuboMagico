@@ -1,4 +1,6 @@
 <?php
+// ARQUIVO: resolucoes.php
+
 session_start();
 include '../includes/funcs.php';
 include '../includes/db_connection.php';
@@ -19,51 +21,46 @@ $filtrosSelecionados = [];
 if (isset($_GET['status'])) {
     $status = $_GET['status'];
     
-    // Captura os filtros que vieram na URL
-    $modalidadeFiltro = $_GET['modalidade_filtro'] ?? 'todos'; // Default 'todos'
+    $modalidadeFiltro = $_GET['modalidade_filtro'] ?? 'todos';
     $alunoFiltro = $_GET['aluno_filtro'] ?? '';
-    $generoFiltro = $_GET['genero'] ?? '1'; // Default '1' (Masculino)
+    $generoFiltro = $_GET['genero'] ?? '1';
     
-    // Remove o parâmetro 'status' da URL e recarrega a página.
     $urlAtual = strtok($_SERVER["REQUEST_URI"], '?');
     
-    // Armazena a mensagem de status na sessão
     if ($status === 'success') {
         $_SESSION['status_message'] = ['type' => 'success', 'text' => 'Dados salvos com sucesso e atualizados!'];
     } elseif ($status === 'error_db' || $status === 'error_db_init') {
         $_SESSION['status_message'] = ['type' => 'danger', 'text' => 'Erro ao salvar os dados no banco. Tente novamente.'];
     } elseif ($status === 'no_data') {
         $_SESSION['status_message'] = ['type' => 'warning', 'text' => 'Nenhum dado para salvar foi encontrado.'];
+    } elseif ($status === 'error_format') {
+        $_SESSION['status_message'] = ['type' => 'danger', 'text' => 'Erro: Formato de tempo inválido detectado. Use o padrão MM:SS.ms (ex: 12.34 ou 1:12.34). Os dados não foram salvos.'];
     } else {
         $_SESSION['status_message'] = ['type' => 'danger', 'text' => 'Ocorreu um erro desconhecido.'];
     }
     
-    // Salva o estado dos filtros na sessão para redefinição após o redirecionamento
     $_SESSION['filtros_selecionados'] = [
         'modalidade' => $modalidadeFiltro,
         'aluno' => $alunoFiltro,
         'genero' => $generoFiltro
     ];
     
-    // Redireciona para a URL base
     header("Location: " . $urlAtual); 
     exit;
 }
 
-// Verifica se há mensagem de status na sessão e lê os filtros salvos
 if (isset($_SESSION['status_message'])) {
     $statusMessage = $_SESSION['status_message'];
-    unset($_SESSION['status_message']); // Limpa a mensagem
+    unset($_SESSION['status_message']);
     
     if (isset($_SESSION['filtros_selecionados'])) {
         $filtrosSelecionados = $_SESSION['filtros_selecionados'];
-        unset($_SESSION['filtros_selecionados']); // Limpa os filtros
+        unset($_SESSION['filtros_selecionados']);
     }
 }
 
-// Define os valores atuais dos filtros (lidos da sessão ou padrões)
 $modalidadeSelecionada = $filtrosSelecionados['modalidade'] ?? 'todos';
-$generoSelecionado = $filtrosSelecionados['genero'] ?? '1'; // Padrão: Masculino
+$generoSelecionado = $filtrosSelecionados['genero'] ?? '1';
 $alunoSelecionado = $filtrosSelecionados['aluno'] ?? '';
 
 // ==========================================================
@@ -71,23 +68,19 @@ $alunoSelecionado = $filtrosSelecionados['aluno'] ?? '';
 // ==========================================================
 
 if (isset($_SESSION['usuario'])) {
-    // A função obterNomeDoBancoDeDados está agora em funcs.php
     $nomeUsuario = obterNomeDoBancoDeDados($_SESSION['usuario']);
 } else {
     header('Location: login.php');
     exit;
 }
 
-// Inclui topo, scripts/css (layout_top.php) e menu (header.php)
 include '../includes/layout_top.php';
 include '../includes/header.php';
 
-// --- Preparação de Dados (Otimizado) ---
-// CHAVE 1: Carrega todos os dados do DB com o mínimo de consultas
-$modalidadesParaFiltro = obterModalidades(); // Funções movidas para funcs.php
-$todosOsAlunos = obterAlunos();             // Funções movidas para funcs.php
-$vinculos = obterVinculosAlunosModalidades(); // Funções movidas para funcs.php
-$solversGlobais = obterTodosOsValoresSolver(); // NOVO: Carrega todos os solvers em 1 consulta!
+$modalidadesParaFiltro = obterModalidades(); 
+$todosOsAlunos = obterAlunos();            
+$vinculos = obterVinculosAlunosModalidades(); 
+$solversGlobais = obterTodosOsValoresSolver(); 
 
 $vinculosJson = [];
 foreach ($vinculos as $v) {
@@ -103,142 +96,172 @@ foreach ($vinculos as $v) {
 <head>
     <title>Formulário de Resoluções</title>
     <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const generoSelect = document.getElementById('genero');
-    const modalidadeSelect = document.getElementById('modalidade_filtro');
-    const alunoSelect = document.getElementById('aluno_filtro'); 
-    const modalidadeTables = document.querySelectorAll('.modalidade-table');
-    const saveButtonContainer = document.getElementById('saveButtonContainer'); 
-    const saveButton = saveButtonContainer ? saveButtonContainer.querySelector('button') : null;
-    
-    // Elementos ocultos para enviar o estado do filtro no POST
-    const modalidadeFiltroOculto = document.getElementById('modalidade_filtro_oculto');
-    const alunoFiltroOculto = document.getElementById('aluno_filtro_oculto');
-    const generoFiltroOculto = document.getElementById('genero_filtro_oculto');
-
-
-    // JSON dos alunos e dos vínculos para uso no JS
-    const todosOsAlunos = <?php echo json_encode($todosOsAlunos); ?>;
-    const vinculosExistentes = <?php echo json_encode($vinculosJson); ?>;
-
-    /**
-     * 1. Filtra o seletor de alunos com base na modalidade e gênero.
-     */
-    function filtrarAlunos() {
-        const modalidadeId = modalidadeSelect.value;
-        const genero = generoSelect.value;
-        const alunoSelecionadoAnterior = '<?php echo $alunoSelecionado; ?>'; // Valor do PHP/Sessão
+    document.addEventListener("DOMContentLoaded", function () {
+        const generoSelect = document.getElementById('genero');
+        const modalidadeSelect = document.getElementById('modalidade_filtro');
+        const alunoSelect = document.getElementById('aluno_filtro'); 
+        const modalidadeTables = document.querySelectorAll('.modalidade-table');
+        const saveButtonContainer = document.getElementById('saveButtonContainer'); 
+        const saveButton = saveButtonContainer ? saveButtonContainer.querySelector('button') : null;
         
-        // Limpa e desabilita o seletor de alunos se não houver modalidade selecionada
-        alunoSelect.innerHTML = '<option value="">Selecione um competidor</option>';
-        alunoSelect.disabled = modalidadeId === 'todos';
-        
-        if (modalidadeId === 'todos') {
-            exibirLinhaAluno(); 
-            return;
-        }
+        const modalidadeFiltroOculto = document.getElementById('modalidade_filtro_oculto');
+        const alunoFiltroOculto = document.getElementById('aluno_filtro_oculto');
+        const generoFiltroOculto = document.getElementById('genero_filtro_oculto');
 
-        let alunoAindaDisponivel = false;
+        const todosOsAlunos = <?php echo json_encode($todosOsAlunos); ?>;
+        const vinculosExistentes = <?php echo json_encode($vinculosJson); ?>;
 
-        // Popula o seletor de aluno
-        todosOsAlunos.forEach(aluno => {
-            const alunoIdString = String(aluno.id); 
-            const sexoString = String(aluno.sexo);
+        function filtrarAlunos() {
+            const modalidadeId = modalidadeSelect.value;
+            const genero = generoSelect.value;
+            const alunoSelecionadoAnterior = '<?php echo $alunoSelecionado; ?>';
             
-            const alunosDaModalidade = vinculosExistentes[modalidadeId];
+            alunoSelect.innerHTML = '<option value="">Selecione um competidor</option>';
+            alunoSelect.disabled = modalidadeId === 'todos';
             
-            const isVinculado = alunosDaModalidade && alunosDaModalidade[alunoIdString]; 
-            const isGeneroCorreto = genero === 'todos' || genero === sexoString; 
+            if (modalidadeId === 'todos') {
+                exibirLinhaAluno(); 
+                return;
+            }
 
-            if (isVinculado && isGeneroCorreto) {
-                const option = document.createElement('option');
-                option.value = alunoIdString;
-                option.textContent = aluno.nome;
-                alunoSelect.appendChild(option);
+            let alunoAindaDisponivel = false;
+
+            todosOsAlunos.forEach(aluno => {
+                const alunoIdString = String(aluno.id); 
+                const sexoString = String(aluno.sexo);
                 
-                if (alunoIdString === alunoSelecionadoAnterior) {
-                    alunoAindaDisponivel = true;
-                }
-            }
-        });
-
-        // Tenta manter a seleção anterior do aluno, se aplicável
-        if (alunoAindaDisponivel) {
-             alunoSelect.value = alunoSelecionadoAnterior;
-        } else {
-             alunoSelect.value = ''; // Reseta se o aluno não estiver mais na lista/filtro
-        }
-        
-        exibirLinhaAluno();
-    }
-
-    /**
-     * 2. Exibe APENAS a linha de input do aluno e modalidade selecionados e controla o botão Salvar.
-     */
-    function exibirLinhaAluno() {
-        const alunoIdSelecionado = alunoSelect.value.trim(); 
-        const modalidadeIdSelecionada = modalidadeSelect.value.trim();
-        const generoIdSelecionado = generoSelect.value.trim(); 
-
-        // Grava os valores atuais nos campos ocultos, que serão enviados no POST ou usados no GET
-        modalidadeFiltroOculto.value = modalidadeIdSelecionada;
-        alunoFiltroOculto.value = alunoIdSelecionado;
-        generoFiltroOculto.value = generoIdSelecionado; 
-        
-        // Controla a visibilidade do botão Salvar.
-        if (saveButtonContainer) {
-            const deveEstarVisivel = modalidadeIdSelecionada !== 'todos' && alunoIdSelecionado !== '';
-            
-            saveButtonContainer.style.display = deveEstarVisivel ? 'block' : 'none';
-            
-            if (saveButton) {
-                 saveButton.disabled = !deveEstarVisivel;
-            }
-        }
-
-        modalidadeTables.forEach(function (table) {
-            const modalidadeId = table.getAttribute('data-modalidade-id');
-            const tableTitle = document.getElementById('title-modalidade-' + modalidadeId);
-            const rows = table.querySelectorAll('.resolucao-row');
-
-            // 1. Oculta/Exibe a Tabela:
-            const tabelaDeveSerVisivel = modalidadeId == modalidadeIdSelecionada && alunoIdSelecionado !== '';
-            
-            if (tabelaDeveSerVisivel) {
-                table.style.display = 'table';
-                if (tableTitle) tableTitle.style.display = 'block';
-            } else {
-                table.style.display = 'none';
-                if (tableTitle) tableTitle.style.display = 'none';
-            }
-
-            // 2. Oculta/Exibe/Habilita a Linha do Aluno:
-            rows.forEach(function (row) {
-                const alunoIdDaLinha = row.getAttribute('data-aluno-id'); 
-                const inputs = row.querySelectorAll('input[type="text"]');
+                const alunosDaModalidade = vinculosExistentes[modalidadeId];
                 
-                if (tabelaDeveSerVisivel && alunoIdDaLinha === alunoIdSelecionado) { 
-                    row.style.display = 'table-row';
-                    // HABILITA: APENAS esses 5 inputs serão enviados no POST
-                    inputs.forEach(input => input.disabled = false); 
-                } else {
-                    row.style.display = 'none';
-                    // DESABILITA: Garante que os inputs de outros alunos não sejam enviados
-                    inputs.forEach(input => input.disabled = true); 
+                const isVinculado = alunosDaModalidade && alunosDaModalidade[alunoIdString]; 
+                const isGeneroCorreto = genero === 'todos' || genero === sexoString; 
+
+                if (isVinculado && isGeneroCorreto) {
+                    const option = document.createElement('option');
+                    option.value = alunoIdString;
+                    option.textContent = aluno.nome;
+                    alunoSelect.appendChild(option);
+                    
+                    if (alunoIdString === alunoSelecionadoAnterior) {
+                        alunoAindaDisponivel = true;
+                    }
                 }
             });
-        });
-    }
 
-    // Adicionar listeners para os filtros
-    generoSelect.addEventListener('change', filtrarAlunos);
-    modalidadeSelect.addEventListener('change', filtrarAlunos);
-    alunoSelect.addEventListener('change', exibirLinhaAluno); 
+            if (alunoAindaDisponivel) {
+                 alunoSelect.value = alunoSelecionadoAnterior;
+            } else {
+                 alunoSelect.value = '';
+            }
+            
+            exibirLinhaAluno();
+        }
 
-    // Inicialize a filtragem
-    setTimeout(filtrarAlunos, 50); 
-});
-</script>
+        function exibirLinhaAluno() {
+            const alunoIdSelecionado = alunoSelect.value.trim(); 
+            const modalidadeIdSelecionada = modalidadeSelect.value.trim();
+            const generoIdSelecionado = generoSelect.value.trim(); 
+
+            modalidadeFiltroOculto.value = modalidadeIdSelecionada;
+            alunoFiltroOculto.value = alunoIdSelecionado;
+            generoFiltroOculto.value = generoIdSelecionado; 
+            
+            if (saveButtonContainer) {
+                const deveEstarVisivel = modalidadeIdSelecionada !== 'todos' && alunoIdSelecionado !== '';
+                saveButtonContainer.style.display = deveEstarVisivel ? 'block' : 'none';
+                if (saveButton) {
+                     saveButton.disabled = !deveEstarVisivel;
+                }
+            }
+
+            modalidadeTables.forEach(function (table) {
+                const modalidadeId = table.getAttribute('data-modalidade-id');
+                const tableTitle = document.getElementById('title-modalidade-' + modalidadeId);
+                const rows = table.querySelectorAll('.resolucao-row');
+
+                const tabelaDeveSerVisivel = modalidadeId == modalidadeIdSelecionada && alunoIdSelecionado !== '';
+                
+                if (tabelaDeveSerVisivel) {
+                    table.style.display = 'table';
+                    if (tableTitle) tableTitle.style.display = 'block';
+                } else {
+                    table.style.display = 'none';
+                    if (tableTitle) tableTitle.style.display = 'none';
+                }
+
+                rows.forEach(function (row) {
+                    const alunoIdDaLinha = row.getAttribute('data-aluno-id'); 
+                    const inputs = row.querySelectorAll('input[type="text"]');
+                    
+                    if (tabelaDeveSerVisivel && alunoIdDaLinha === alunoIdSelecionado) { 
+                        row.style.display = 'table-row';
+                        inputs.forEach(input => input.disabled = false); 
+                    } else {
+                        row.style.display = 'none';
+                        inputs.forEach(input => input.disabled = true); 
+                    }
+                });
+            });
+        }
+
+        generoSelect.addEventListener('change', filtrarAlunos);
+        modalidadeSelect.addEventListener('change', filtrarAlunos);
+        alunoSelect.addEventListener('change', exibirLinhaAluno); 
+
+        setTimeout(filtrarAlunos, 50); 
+    });
+
+    // Validação de formato e aviso de campos em branco no envio
+    document.addEventListener("DOMContentLoaded", function () {
+        const formResolucoes = document.querySelector('form[action="processa_solvers.php"]');
+        if (formResolucoes) {
+            formResolucoes.addEventListener('submit', function(e) {
+                const inputsAtivos = formResolucoes.querySelectorAll('input[type="text"]:not(:disabled)');
+                let erroFormato = false;
+                let campoComErro = '';
+                let camposEmBranco = 0;
+                let totalInputs = inputsAtivos.length;
+
+                // Regex aceita formatos de tempo válidos ou DNF/DNS (que serão convertidos em branco)
+                const regexTempo = /^([0-9]+:[0-5][0-9]\.[0-9]{2}|[0-5]?[0-9]\.[0-9]{2}|[0-9]+:[0-5][0-9]|[0-5]?[0-9]|DNF|DNS)$/i;
+
+                inputsAtivos.forEach(input => {
+                    let valor = input.value.trim();
+                    
+                    if (valor === '') {
+                        camposEmBranco++;
+                        input.classList.remove('is-invalid');
+                    } else if (!regexTempo.test(valor)) {
+                        erroFormato = true;
+                        campoComErro = valor;
+                        input.classList.add('is-invalid');
+                    } else {
+                        input.classList.remove('is-invalid');
+                    }
+                });
+
+                // 1. Se houver erro de formato, BLOQUEIA obrigatoriamente
+                if (erroFormato) {
+                    e.preventDefault();
+                    alert('Atenção: O valor "' + campoComErro + '" está em um formato inválido.\n\nO formato correto deve seguir o padrão: \n• 01:12.34 (minutos, segundos e centésimos)');
+                    return;
+                }
+
+                // 2. Se o formato estiver correto mas houver campos em branco, avisa mas permite escolher
+                if (camposEmBranco > 0 && camposEmBranco < totalInputs) {
+                    const prosseguir = confirm('Atenção: Existem ' + camposEmBranco + ' solver(s) em branco.\n\nVerifique o formulário antes de prosseguir ou clique em "OK" para salvar mesmo assim.');
+                    if (!prosseguir) {
+                        e.preventDefault();
+                    }
+                } else if (camposEmBranco === totalInputs) {
+                    const prosseguir = confirm('Atenção: Todos os solvers deste aluno estão em branco. Deseja continuar?');
+                    if (!prosseguir) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+    });
+    </script>
 </head>
 <body>
     <div class="container">
@@ -298,7 +321,6 @@ document.addEventListener("DOMContentLoaded", function () {
                             <?php if (!empty($alunoSelecionado)): ?>
                                 <option value="<?php echo htmlspecialchars($alunoSelecionado); ?>" selected>
                                     <?php 
-                                        // Busca o nome do aluno para exibir a opção selecionada corretamente
                                         $alunoObj = array_filter($todosOsAlunos, fn($a) => $a['id'] == $alunoSelecionado);
                                         echo htmlspecialchars($alunoObj ? array_values($alunoObj)[0]['nome'] : 'Carregando...');
                                     ?>
@@ -318,7 +340,6 @@ document.addEventListener("DOMContentLoaded", function () {
             <input type="hidden" name="genero_filtro_oculto" id="genero_filtro_oculto" value="<?php echo htmlspecialchars($generoSelecionado); ?>">
             
             <?php
-            // Reconstroi os vínculos para o HTML/PHP
             $vinculosExistentes = [];
             foreach ($vinculos as $vinculo) {
                 $modalidadeKey = (string)$vinculo['modalidade'];
@@ -329,7 +350,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 $vinculosExistentes[$modalidadeKey][$alunoKey] = true;
             }
 
-            // Exibe os campos do formulário (ocultos por padrão)
             foreach ($modalidadesParaFiltro as $modalidade) {
                 $modalidadeId = $modalidade['id'];
                 
@@ -350,17 +370,14 @@ document.addEventListener("DOMContentLoaded", function () {
                         $alunoId = $aluno['id'];
                         
                         if (isset($vinculosExistentes[$modalidadeId][$alunoId])) {
-                            // Linha oculta e desabilitada por padrão.
                             echo '<tr class="resolucao-row" data-genero="' . htmlspecialchars($aluno['sexo']) . '" data-aluno-id="' . $alunoId . '" style="display:none;">';
                             echo '<td>' . htmlspecialchars($aluno['nome']) . '</td>';
                             
-                            // CHAVE 2 (Otimizada): Pega o valor do array global, evitando consulta DB
                             $valoresSolverExistente = $solversGlobais[$modalidadeId][$alunoId] ?? null;
                             
                             for ($i = 1; $i <= 5; $i++) {
                                 $inputName = "resolucoes[" . $modalidadeId . "][" . $alunoId . "][" . $i . "]";
                                 $valorExistente = $valoresSolverExistente ? $valoresSolverExistente["solver$i"] : ''; 
-                                // Input desabilitado por padrão.
                                 echo '<td><input type="text" class="form-control form-control-sm" name="' . $inputName . '" value="' . htmlspecialchars($valorExistente) . '" disabled></td>'; 
                             }
                             echo '</tr>';
@@ -378,3 +395,5 @@ document.addEventListener("DOMContentLoaded", function () {
         </form>
     </div>
     <?php include '../includes/layout_bottom.php'; ?>
+</body>
+</html>

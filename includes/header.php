@@ -50,6 +50,18 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
                 </div>
             </li>
 
+            <?php if ($is_superuser): ?>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="modalidadesDropdown" role="button" data-toggle="dropdown"
+                       aria-haspopup="true" aria-expanded="false">
+                       <i class="fa-solid fa-shuffle"></i> Modalidades
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="modalidadesDropdown">
+                        <a class="dropdown-item" href="../public/lista_modalidades.php"><i class="fa-solid fa-bars"></i> Listar Modalidades</a>
+                    </div>
+                </li>
+            <?php endif; ?>
+            
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="competicaoDropdown" role="button" data-toggle="dropdown"
                    aria-haspopup="true" aria-expanded="false">
@@ -63,16 +75,6 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
             </li>
 
             <?php if ($is_superuser): ?>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="modalidadesDropdown" role="button" data-toggle="dropdown"
-                       aria-haspopup="true" aria-expanded="false">
-                       <i class="fa-solid fa-shuffle"></i> Modalidades
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="modalidadesDropdown">
-                        <a class="dropdown-item" href="../public/lista_modalidades.php"><i class="fa-solid fa-bars"></i> Listar Modalidades</a>
-                    </div>
-                </li>
-
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="dashDropdown" role="button" data-toggle="dropdown"
                        aria-haspopup="true" aria-expanded="false">

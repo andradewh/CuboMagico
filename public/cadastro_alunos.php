@@ -1,51 +1,96 @@
 <?php
+// ARQUIVO: cadastro_alunos.php
+
 session_start();
 include '../includes/funcs.php';
 include '../includes/db_connection.php';
 
 if (isset($_SESSION['usuario'])) {
-    // O usuário está autenticado
     $nomeUsuario = obterNomeDoBancoDeDados($_SESSION['usuario']);
+    $usuarioLogado = $_SESSION['usuario'];
 } else {
-    // O usuário não está autenticado, redirecione para a página de login
     header('Location: login.php');
     exit;
 }
 
+// Obtém o ID e o E-mail da sessão de forma segura
+$userId = is_array($usuarioLogado) ? ($usuarioLogado['id'] ?? null) : null;
+$userEmail = is_array($usuarioLogado) ? ($usuarioLogado['email'] ?? null) : $usuarioLogado;
+
+// Consulta direta no banco para garantir o id_evento atualizado do usuário logado
+$stmtUser = $pdo->prepare("SELECT id_evento, superuser FROM usuarios WHERE id = ? OR email = ?");
+$stmtUser->execute([$userId, $userEmail]);
+$userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+$idEventoCorrente = $userData['id_evento'] ?? null;
+$isSuperuser = $userData['superuser'] ?? 0;
 
 include '../includes/layout_top.php';
 include '../includes/header.php';
 
-$sql = "SELECT id, nome from cubomagico.escolas";
-$result = $pdo->query($sql);
+// Busca as escolas para o select do formulário
+$sqlEscolas = "SELECT id, nome FROM cubomagico.escolas ORDER BY nome";
+$resultEscolas = $pdo->query($sqlEscolas);
 
-$sql_list = "SELECT alunos.id, alunos.nome, alunos.idade, if(alunos.sexo = 1,'Masculino','Feminino') sexo, escolas.nome escola 
-          from cubomagico.escolas
-          join cubomagico.alunos ON alunos.escola = escolas.id
-          order by alunos.id";
-$result_list = $pdo->query($sql_list);
+// Busca os eventos para o select do formulário
+$sqlEventos = "SELECT id, nome FROM eventos where status = 1 ORDER BY data DESC";
+$resultEventos = $pdo->query($sqlEventos);
 
+// Consulta da tabela filtrada estritamente pelo id_evento do usuário logado
+if ($idEventoCorrente) {
+    $sql_list = "SELECT alunos.id, alunos.nome, alunos.idade, IF(alunos.sexo = 1, 'Masculino', 'Feminino') AS sexo, escolas.nome AS escola, eventos.nome AS evento_nome
+            FROM alunos 
+            JOIN escolas ON alunos.escola = escolas.id 
+            LEFT JOIN eventos ON alunos.id_evento = eventos.id
+            WHERE alunos.id_evento = :id_evento";
+    $stmt = $pdo->prepare($sql_list);
+    $stmt->execute([':id_evento' => $idEventoCorrente]);
+} else {
+    // Se o usuário não tiver nenhum evento vinculado, exibe todos
+    $sql_list = "SELECT alunos.id, alunos.nome, alunos.idade, IF(alunos.sexo = 1, 'Masculino', 'Feminino') AS sexo, escolas.nome AS escola, eventos.nome AS evento_nome
+            FROM alunos 
+            JOIN escolas ON alunos.escola = escolas.id 
+            LEFT JOIN eventos ON alunos.id_evento = eventos.id";
+    $stmt = $pdo->query($sql_list);
+}
 ?>
 <body>
 <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
-                <div class="card">
+                <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        <h5 class="card-title text-center">Cadastro de Competidores</h5>
+                        <h5 class="card-title text-center font-weight-bold mb-4">Cadastro de Competidores</h5>
                         <form action="processa_cadastro_alunos.php" method="post">
                             <div class="form-group">
                                 <label for="nome">Nome</label>
                                 <input type="text" name="nome" id="nome" class="form-control" placeholder="Nome" required>
                             </div>
+                            
+                            <!-- Campo de Seleção de Evento -->
                             <div class="form-group">
-                            <label for="selectField">Instituição de Ensino</label>
-                                <select name="escola" class="custom-select" label="escola">
+                                <label for="id_evento">Evento</label>
+                                <select name="id_evento" id="id_evento" class="custom-select" required>
+                                    <option value="">Selecione o Evento</option>
                                     <?php
-                                    if($result){
-                                        while($row = $result->fetch(PDO::FETCH_ASSOC)){
-                                            echo '<option value="' . $row['id'] . '">' . $row['nome'] . '</option>';
+                                    if($resultEventos){
+                                        while($ev = $resultEventos->fetch(PDO::FETCH_ASSOC)){
+                                            $selected = ($idEventoCorrente == $ev['id']) ? 'selected' : '';
+                                            echo '<option value="' . $ev['id'] . '" ' . $selected . '>' . htmlspecialchars($ev['nome']) . '</option>';
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
 
+                            <div class="form-group">
+                                <label for="escola">Instituição de Ensino</label>
+                                <select name="escola" id="escola" class="custom-select" required>
+                                    <option value="">Selecione a Instituição</option>
+                                    <?php
+                                    if($resultEscolas){
+                                        while($row = $resultEscolas->fetch(PDO::FETCH_ASSOC)){
+                                            echo '<option value="' . $row['id'] . '">' . htmlspecialchars($row['nome']) . '</option>';
                                         }
                                     }
                                     ?>
@@ -56,8 +101,8 @@ $result_list = $pdo->query($sql_list);
                                 <input type="number" class="form-control" id="idade" name="idade" placeholder="Idade" required>
                             </div>
                             <div class="form-group">
-                            <label for="selectField">Sexo</label>
-                                <select name="sexo" class="custom-select" label="sexo">
+                                <label for="sexo">Sexo</label>
+                                <select name="sexo" id="sexo" class="custom-select">
                                     <option value="1" selected>Masculino</option>
                                     <option value="2">Feminino</option>
                                 </select>
@@ -75,6 +120,7 @@ $result_list = $pdo->query($sql_list);
                 <tr>
                     <th scope="col">Codigo</th>
                     <th scope="col">Nome</th>
+                    <th scope="col">Evento</th>
                     <th scope="col">Idade</th>
                     <th scope="col">Sexo</th>
                     <th scope="col">Instituição de Ensino</th>
@@ -83,13 +129,14 @@ $result_list = $pdo->query($sql_list);
             </thead>
             <tbody>
                 <?php
-                    while ($alunos_data = $result_list->fetch(PDO::FETCH_ASSOC)) {
+                    while ($alunos_data = $stmt->fetch(PDO::FETCH_ASSOC)) {
                         echo "<tr>";
                         echo "<td>".$alunos_data['id']."</td>";
-                        echo "<td>".$alunos_data['nome']."</td>";
+                        echo "<td>".htmlspecialchars($alunos_data['nome'])."</td>";
+                        echo "<td>".htmlspecialchars($alunos_data['evento_nome'] ?? 'Geral')."</td>";
                         echo "<td>".$alunos_data['idade']."</td>";
                         echo "<td>".$alunos_data['sexo']."</td>";
-                        echo "<td>".$alunos_data['escola']."</td>";
+                        echo "<td>".htmlspecialchars($alunos_data['escola'])."</td>";
                         echo "<td class='d-flex'>";
                         echo "<a class='btn btn-sm btn-success edit-btn mr-2' data-toggle='modal' data-target='#pageModal' data-id='{$alunos_data['id']}'>Editar</a>";
                         echo "
@@ -99,7 +146,7 @@ $result_list = $pdo->query($sql_list);
                         </form>";
                         echo "</td>";
                         echo "</tr>";
-                    }                
+                    }               
                 ?>
             </tbody>
         </table>
@@ -116,9 +163,6 @@ $result_list = $pdo->query($sql_list);
                 <div class="modal-body">
                     <div id="pageContent"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                </div>
             </div>
         </div>
     </div>
@@ -126,10 +170,8 @@ $result_list = $pdo->query($sql_list);
         $(document).on('click', '.edit-btn', function() {
             var id = $(this).data('id');
             
-            // Limpe o conteúdo da modal antes de abrir
             $('#pageContent').html('');
             
-            // Enviar o ID do usuário para a página de edição na modal
             $.ajax({
                 type: 'POST',
                 url: 'edicao_aluno.php',
@@ -137,7 +179,7 @@ $result_list = $pdo->query($sql_list);
                     id: id
                 },
                 success: function(data) {
-                    $('#pageContent').html(data);
+                    $('#pageContent').html(data);   
                 },
                 error: function() {
                     alert('Erro ao carregar a página de edição.');
