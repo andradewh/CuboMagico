@@ -29,7 +29,7 @@ if (is_array($usuarioLogado)) {
 }
 // ----------------------------------------------------
 // Busca lista de usuários (apenas dados necessários, por segurança)
-$sql = "SELECT id, nome, email, superuser FROM usuarios";
+$sql = "SELECT id, nome, email, superuser, id_evento FROM usuarios";
 $result = $pdo->query($sql);
 ?>
 
@@ -83,34 +83,42 @@ $result = $pdo->query($sql);
                 // Verifica se o registro atual é o próprio usuário logado
                 $ehProprioUsuario = $idUsuarioLogado == $user_data['id'];
 
-                // Regra para EDITAR: 
-                // 1. É o próprio usuário (pode editar a si mesmo) OU
-                // 2. É Superuser E não é ele (pode editar outros)
+                // Regra para EDITAR: É o próprio usuário OU é Superuser
                 $podeEditar = $ehProprioUsuario || ($isSuperuser == 1);
                 
-                // Regra para DELETAR: 
-                // 1. É Superuser E não é ele (Superuser não pode se auto-deletar)
-                $podeDeletar = $isSuperuser == 1;
+                // Regra para DELETAR: É Superuser E não é ele mesmo
+                $podeDeletar = ($isSuperuser == 1 && !$ehProprioUsuario);
+
+                // Regra para DESVINCULAR: É Superuser e o usuário tem um evento associado
+                $temEvento = !empty($user_data['id_evento']);
+                $podeDesvincular = ($isSuperuser == 1 && $temEvento);
             ?>
                 <tr>
                     <td><?= $user_data['id'] ?></td>
                     <td><?= htmlspecialchars($user_data['nome']) ?></td>
                     <td><?= htmlspecialchars($user_data['email']) ?></td>
                     <td><?= $user_data['superuser'] == 1 ? '<span class="badge badge-primary">Sim</span>' : 'Não' ?></td>
-                    <td class="d-flex">
+                    <td class="d-flex align-items-center">
                         <?php if ($podeEditar): ?>
                             <a class="btn btn-sm btn-success edit-btn mr-2" data-toggle="modal"
                                data-target="#pageModal" data-id="<?= $user_data['id'] ?>">Editar</a>
                         <?php endif; ?>
 
-                        <?php if ($podeDeletar): ?>
-                            <form method="post" action="processa_apaga_usuario.php" onsubmit="return confirm('Tem certeza que deseja apagar o usuário <?= htmlspecialchars($user_data['nome']) ?>? Esta ação é irreversível.');">
+                        <?php if ($podeDesvincular): ?>
+                            <form method="post" action="processa_desvincular_evento.php" onsubmit="return confirm('Deseja realmente desvincular o usuário <?= htmlspecialchars($user_data['nome']) ?> do evento atual?');">
                                 <input type="hidden" name="id" value="<?= $user_data['id'] ?>">
-                                <button type="submit" class="btn btn-sm btn-danger delete-btn ml-auto mr-2">Deletar</button>
+                                <button type="submit" class="btn btn-sm btn-warning mr-2 text-white" title="Desvincular do evento">Desvincular</button>
                             </form>
                         <?php endif; ?>
 
-                        <?php if (!$podeEditar && !$podeDeletar): ?>
+                        <?php if ($podeDeletar): ?>
+                            <form method="post" action="processa_apaga_usuario.php" onsubmit="return confirm('Tem certeza que deseja apagar o usuário <?= htmlspecialchars($user_data['nome']) ?>? Esta ação é irreversível.');">
+                                <input type="hidden" name="id" value="<?= $user_data['id'] ?>">
+                                <button type="submit" class="btn btn-sm btn-danger delete-btn mr-2">Deletar</button>
+                            </form>
+                        <?php endif; ?>
+
+                        <?php if (!$podeEditar && !$podeDeletar && !$podeDesvincular): ?>
                             <span class="text-muted">Sem Ação</span>
                         <?php endif; ?>
                     </td>
@@ -129,10 +137,8 @@ $result = $pdo->query($sql);
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
+            <!-- Corpo do modal onde o formulário é carregado via AJAX -->
             <div class="modal-body" id="pageContent"></div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-            </div>
         </div>
     </div>
 </div>

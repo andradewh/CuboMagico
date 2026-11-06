@@ -91,6 +91,7 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
                 </a>
                 <div class="dropdown-menu" aria-labelledby="administracaoDropdown">
                     <a class="dropdown-item" href="cadastro_usuarios.php"><i class="fa-solid fa-user-shield"></i> Usuários</a>
+                    <a class="dropdown-item" href="cadastro_eventos.php"><i class="fa-solid"></i> Eventos</a>
                 </div>
             </li>
         </ul>

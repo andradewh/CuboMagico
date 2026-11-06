@@ -70,10 +70,15 @@ function obterTodosOsValoresSolver() {
  * Busca um usuário no banco de dados pelo seu ID, garantindo que a senha não seja exposta.
  */
 function obterUsuarioPorId($id) {
-    global $pdo; 
+    global $pdo;
 
-    // Seleciona todos os campos, EXCETO a senha
-    $sql = "SELECT id, nome, email FROM usuarios WHERE id = :id";
+    // Seleciona os campos, EXCETO a senha
+    $sql = "
+        SELECT id, nome, email, id_evento
+        FROM usuarios
+        WHERE id = :id
+    ";
+
     $stmt = $pdo->prepare($sql);
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
     $stmt->execute();

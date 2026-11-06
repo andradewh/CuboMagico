@@ -215,3 +215,15 @@ FROM
 	FROM alunomodalidadesolver
 ) resolucoes
 ORDER BY 2, 1, 3)
+
+CREATE TABLE eventos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    data DATE NOT NULL,
+    local VARCHAR(255) NOT NULL,
+    organizador VARCHAR(150) NOT NULL,
+    status TINYINT(1) NOT NULL DEFAULT 0,
+
+    CONSTRAINT chk_eventos_status
+        CHECK (status IN (0, 1))
+);
