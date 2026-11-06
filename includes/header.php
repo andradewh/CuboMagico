@@ -40,7 +40,7 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
             <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle" href="#" id="alunosDropdown" role="button" data-toggle="dropdown"
                    aria-haspopup="true" aria-expanded="false">
-                   <i class="fa-solid fa-football"></i> Competidores
+                   <i class="fa-solid fa-user-graduate"></i> Competidores
                 </a>
                 <div class="dropdown-menu" aria-labelledby="alunosDropdown">
                     <?php if ($is_superuser): ?>
@@ -54,10 +54,10 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="modalidadesDropdown" role="button" data-toggle="dropdown"
                        aria-haspopup="true" aria-expanded="false">
-                       <i class="fa-solid fa-shuffle"></i> Modalidades
+                       <i class="fa-solid fa-puzzle-piece"></i> Modalidades
                     </a>
                     <div class="dropdown-menu" aria-labelledby="modalidadesDropdown">
-                        <a class="dropdown-item" href="../public/lista_modalidades.php"><i class="fa-solid fa-bars"></i> Listar Modalidades</a>
+                        <a class="dropdown-item" href="../public/lista_modalidades.php"><i class="fa-solid fa-list-check"></i> Listar Modalidades</a>
                     </div>
                 </li>
             <?php endif; ?>
@@ -69,7 +69,7 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
                 </a>
                 <div class="dropdown-menu" aria-labelledby="competicaoDropdown">
                     <a class="dropdown-item" href="../public/edicao_alunos_modalidades.php"><i class="fa-solid fa-link"></i> Vincular Competidores/Modalidades</a>
-                    <a class="dropdown-item" href="../public/edicao_alunos_modalidades_resultados.php"><i class="fa-solid fa-input-text"></i> Inserir Resultados</a>
+                    <a class="dropdown-item" href="../public/edicao_alunos_modalidades_resultados.php"><i class="fa-solid fa-stopwatch"></i> Inserir Resultados</a>
                     <a class="dropdown-item" href="../public/lista_resultados.php"><i class="fa-solid fa-medal"></i> Resultados</a>
                 </div>
             </li>
@@ -78,7 +78,7 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="dashDropdown" role="button" data-toggle="dropdown"
                        aria-haspopup="true" aria-expanded="false">
-                       <i class="fa-solid fa-house"></i> Análise de dados
+                       <i class="fa-solid fa-chart-pie"></i> Análise de dados
                     </a>
                     <div class="dropdown-menu" aria-labelledby="dashDropdown">
                         <a class="dropdown-item" href="../public/dash.php"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
@@ -93,7 +93,7 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
                 </a>
                 <div class="dropdown-menu" aria-labelledby="administracaoDropdown">
                     <a class="dropdown-item" href="cadastro_usuarios.php"><i class="fa-solid fa-user-shield"></i> Usuários</a>
-                    <a class="dropdown-item" href="cadastro_eventos.php"><i class="fa-solid"></i> Eventos</a>
+                    <a class="dropdown-item" href="cadastro_eventos.php"><i class="fa-solid fa-calendar-days"></i> Eventos</a>
                 </div>
             </li>
         </ul>
