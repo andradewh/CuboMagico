@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 
@@ -25,11 +24,11 @@ if (is_array($usuarioLogado)) {
     $idUsuarioLogado = (int)($usuarioLogado['id'] ?? -1);
 }
 
-// --- Busca os eventos cadastrados ---
+// --- Busca os eventos cadastrados (incluindo o banner se houver) ---
 $sql = "
-    SELECT id, nome, data, local, organizador, status
+    SELECT id, nome, data, local, organizador, status, banner
     FROM eventos
-    ORDER BY data DESC, id DESC
+    ORDER BY id
 ";
 
 $result = $pdo->query($sql);
@@ -60,7 +59,8 @@ $eventos = $result->fetchAll(PDO::FETCH_ASSOC);
                         Cadastro de Evento
                     </h5>
 
-                    <form action="processa_cadastro_eventos.php" method="POST">
+                    <!-- ADICIONADO enctype="multipart/form-data" PARA SUPORTE A UPLOAD -->
+                    <form action="processa_cadastro_eventos.php" method="POST" enctype="multipart/form-data">
 
                         <div class="form-group mb-3">
                             <label for="nome">Nome do Evento</label>
@@ -116,6 +116,19 @@ $eventos = $result->fetchAll(PDO::FETCH_ASSOC);
                             >
                         </div>
 
+                        <!-- NOVO CAMPO: BANNER DO EVENTO -->
+                        <div class="form-group mb-3">
+                            <label for="banner_evento">Banner do Evento (Imagem)</label>
+                            <input
+                                type="file"
+                                name="banner_evento"
+                                id="banner_evento"
+                                class="form-control-file"
+                                accept="image/*"
+                            >
+                            <small class="text-muted">Formatos aceitos: JPG, PNG, GIF. (Será salvo com hash na pasta assets/files/)</small>
+                        </div>
+
                         <div class="form-group mb-3">
                             <label for="status">Status</label>
 
@@ -167,6 +180,7 @@ $eventos = $result->fetchAll(PDO::FETCH_ASSOC);
             <thead>
                 <tr>
                     <th>#</th>
+                    <th>Banner</th>
                     <th>Nome</th>
                     <th>Data</th>
                     <th>Local</th>
@@ -186,6 +200,14 @@ $eventos = $result->fetchAll(PDO::FETCH_ASSOC);
 
                             <td>
                                 <?= (int)$evento['id'] ?>
+                            </td>
+
+                            <td class="text-center">
+                                <?php if (!empty($evento['banner'])): ?>
+                                    <img src="../assets/files/<?= htmlspecialchars($evento['banner'], ENT_QUOTES, 'UTF-8') ?>" alt="Banner" style="height: 40px; width: 80px; object-fit: cover;" class="rounded shadow-sm">
+                                <?php else: ?>
+                                    <span class="text-muted small">Sem banner</span>
+                                <?php endif; ?>
                             </td>
 
                             <td>
@@ -289,7 +311,7 @@ $eventos = $result->fetchAll(PDO::FETCH_ASSOC);
                 <?php else: ?>
 
                     <tr>
-                        <td colspan="7" class="text-center text-muted">
+                        <td colspan="8" class="text-center text-muted">
                             Nenhum evento cadastrado.
                         </td>
                     </tr>
@@ -341,9 +363,11 @@ $eventos = $result->fetchAll(PDO::FETCH_ASSOC);
 
             </div>
 
+            <!-- ADICIONADO enctype="multipart/form-data" TAMBÉM NO MODAL -->
             <form
                 action="processa_edicao_eventos.php"
                 method="POST"
+                enctype="multipart/form-data"
             >
 
                 <div class="modal-body">
@@ -419,6 +443,19 @@ $eventos = $result->fetchAll(PDO::FETCH_ASSOC);
                             required
                         >
 
+                    </div>
+
+                    <!-- NOVO CAMPO DE BANNER NO MODAL DE EDIÇÃO -->
+                    <div class="form-group mb-3">
+                        <label for="editar_banner">Alterar Banner do Evento (Opcional)</label>
+                        <input
+                            type="file"
+                            name="banner_evento"
+                            id="editar_banner"
+                            class="form-control-file"
+                            accept="image/*"
+                        >
+                        <small class="text-muted">Selecione apenas se desejar substituir o banner atual.</small>
                     </div>
 
                     <div class="form-group mb-3">

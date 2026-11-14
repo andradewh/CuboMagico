@@ -1,4 +1,3 @@
-
 <?php
 // ARQUIVO: processa_edicao_eventos.php
 
@@ -26,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         isset($_POST['status'])
     ) {
 
-        // 1. Coleta dos dados
+        // Coleta dos dados
         $id = filter_var($_POST['id'], FILTER_VALIDATE_INT);
         $nome = trim($_POST['nome']);
         $data = trim($_POST['data']);
@@ -89,26 +88,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // 4. Caso exista algum erro de validação
         if (!empty($erro)) {
             header(
-                'Location: edicao_evento.php?id=' .
-                urlencode($_POST['id']) .
-                '&erro=' . $erro
+                'Location: cadastro_eventos.php?erro=' . $erro
             );
             exit;
         }
 
-        // 5. Verifica se o evento existe
-        $consulta = "SELECT id FROM eventos WHERE id = :id";
+        // 5. Verifica se o evento existe e busca o banner atual (se houver)
+        $consulta = "SELECT id, banner FROM eventos WHERE id = :id";
 
         $stmt = $pdo->prepare($consulta);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
+        $eventoAtual = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($stmt->rowCount() === 0) {
+        if (!$eventoAtual) {
             header('Location: cadastro_eventos.php?erro=evento_nao_encontrado');
             exit;
         }
 
-        // 6. Atualiza o evento
+        // ==========================================================
+        // 5.1 PROCESSAMENTO DO NOVO UPLOAD DE BANNER (SE ENVIADO)
+        // ==========================================================
+        $bannerHashNome = $eventoAtual['banner']; // Mantém o banner antigo por padrão
+
+        if (isset($_FILES['banner_evento']) && $_FILES['banner_evento']['error'] === UPLOAD_ERR_OK) {
+            $fileTmpPath = $_FILES['banner_evento']['tmp_name'];
+            $fileName = $_FILES['banner_evento']['name'];
+            $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+            
+            if (in_array($fileExtension, $allowedExtensions)) {
+                $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
+                $uploadFileDir = '../assets/files/';
+                
+                if (!is_dir($uploadFileDir)) {
+                    mkdir($uploadFileDir, 0755, true);
+                }
+                
+                $dest_path = $uploadFileDir . $newFileName;
+                
+                if (move_uploaded_file($fileTmpPath, $dest_path)) {
+                    // Apaga o banner antigo da pasta se ele existir
+                    if (!empty($eventoAtual['banner']) && file_exists($uploadFileDir . $eventoAtual['banner'])) {
+                        @unlink($uploadFileDir . $eventoAtual['banner']);
+                    }
+                    // Atualiza com o novo hash
+                    $bannerHashNome = $newFileName;
+                }
+            }
+        }
+
+        // 6. Atualiza o evento (incluindo o banner)
         $atualizarQuery = "
             UPDATE eventos
             SET
@@ -116,7 +147,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 data = :data,
                 local = :local,
                 organizador = :organizador,
-                status = :status
+                status = :status,
+                banner = :banner
             WHERE id = :id
         ";
 
@@ -128,6 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindParam(':local', $local, PDO::PARAM_STR);
         $stmt->bindParam(':organizador', $organizador, PDO::PARAM_STR);
         $stmt->bindParam(':status', $status, PDO::PARAM_INT);
+        $stmt->bindParam(':banner', $bannerHashNome, PDO::PARAM_STR);
 
         // 7. Executa a atualização
         if ($stmt->execute()) {

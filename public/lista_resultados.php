@@ -14,7 +14,7 @@ if (isset($_SESSION['usuario'])) {
     exit;
 }
 
-// Obtém o ID e o E-mail da sessão de forma segura para recuperar o evento corrente
+// Obtém o ID e o E-mail da sessão de forma segura para recuperar o evento corrente e o banner
 $userId = is_array($usuarioLogado) ? ($usuarioLogado['id'] ?? null) : null;
 $userEmail = is_array($usuarioLogado) ? ($usuarioLogado['email'] ?? null) : $usuarioLogado;
 
@@ -23,6 +23,17 @@ $stmtUser->execute([$userId, $userEmail]);
 $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
 
 $idEventoCorrente = $userData['id_evento'] ?? null;
+
+// Busca o banner do evento corrente
+$bannerEvento = null;
+if ($idEventoCorrente) {
+    $stmtEvento = $pdo->prepare("SELECT banner FROM eventos WHERE id = ?");
+    $stmtEvento->execute([$idEventoCorrente]);
+    $eventoData = $stmtEvento->fetch(PDO::FETCH_ASSOC);
+    if ($eventoData) {
+        $bannerEvento = $eventoData['banner'];
+    }
+}
 
 function time_to_float($time_str) {
     $time_str = trim((string)$time_str);
@@ -339,6 +350,16 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             overflow: hidden;
         }
     </style>
+
+    <!-- EXIBIÇÃO DO BANNER DO EVENTO ACIMA DO TÍTULO DE RESULTADOS -->
+    <?php if (!empty($bannerEvento)): ?>
+        <div class="mb-4 text-center">
+            <img src="../assets/files/<?php echo htmlspecialchars($bannerEvento); ?>" 
+                alt="Banner do Evento" 
+                class="img-fluid rounded shadow-sm mx-auto d-block" 
+                style="width: 100%; height: auto; max-width: 100%;">
+        </div>
+    <?php endif; ?>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>

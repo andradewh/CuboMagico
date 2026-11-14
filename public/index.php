@@ -36,14 +36,17 @@ $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
 $idEventoCorrente = $userData['id_evento'] ?? null;
 $isSuperuser = $userData['superuser'] ?? 0;
 
-// Busca o nome do evento corrente para exibir no lugar de "Dados sintéticos"
+// Busca o nome e o banner do evento corrente
 $nomeEvento = "Painel Geral da Competição";
+$bannerEvento = null;
+
 if ($idEventoCorrente) {
-    $stmtEvento = $pdo->prepare("SELECT nome FROM eventos WHERE id = ?");
+    $stmtEvento = $pdo->prepare("SELECT nome, banner FROM eventos WHERE id = ?");
     $stmtEvento->execute([$idEventoCorrente]);
     $eventoData = $stmtEvento->fetch(PDO::FETCH_ASSOC);
     if ($eventoData) {
         $nomeEvento = $eventoData['nome'];
+        $bannerEvento = $eventoData['banner'];
     }
 }
 
@@ -149,6 +152,16 @@ include '../includes/header.php';
 ?>
 
 <main class="container mt-4">
+
+    <!-- EXIBIÇÃO DO BANNER DO EVENTO (ACIMA DO NOME) -->
+    <?php if (!empty($bannerEvento)): ?>
+        <div class="mb-4 text-center">
+            <img src="../assets/files/<?php echo htmlspecialchars($bannerEvento); ?>" 
+                alt="Banner do Evento" 
+                class="img-fluid rounded shadow-sm mx-auto d-block" 
+                style="width: 100%; height: auto; max-width: 100%;">
+        </div>
+    <?php endif; ?>
 
     <!-- Título substituído pelo nome dinâmico do evento -->
     <h2 class="mb-4 text-dark font-weight-bold">

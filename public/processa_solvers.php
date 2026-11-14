@@ -12,6 +12,12 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 // ==========================================================
+// CAPTURA O ID DO USUÁRIO LOGADO NA SESSÃO
+// (Certifique-se de que a chave da sessão corresponda à usada no seu sistema, ex: 'id_usuario', 'id' ou 'usuario_id')
+// ==========================================================
+$usuarioIdLogado = $_SESSION['usuario']['id'] ?? null;
+
+// ==========================================================
 // 1. CAPTURA OS VALORES DOS FILTROS ENVIADOS PELO FORMULÁRIO OCULTO
 // Estes valores serão usados para manter o estado após o redirecionamento.
 // ==========================================================
@@ -66,19 +72,20 @@ try {
 }
 
 try {
-    // 4. PREPARA O SQL COM ON DUPLICATE KEY UPDATE (sem alteração)
-    $sql = "INSERT INTO alunomodalidadesolver (aluno, modalidade, solver1, solver2, solver3, solver4, solver5) 
-             VALUES (:aluno, :modalidade, :s1, :s2, :s3, :s4, :s5)
+    // 4. PREPARA O SQL COM ON DUPLICATE KEY UPDATE (incluindo usuario_id)
+    $sql = "INSERT INTO alunomodalidadesolver (aluno, modalidade, solver1, solver2, solver3, solver4, solver5, usuario_id) 
+             VALUES (:aluno, :modalidade, :s1, :s2, :s3, :s4, :s5, :usuario_id)
              ON DUPLICATE KEY UPDATE 
                  solver1 = VALUES(solver1), 
                  solver2 = VALUES(solver2), 
                  solver3 = VALUES(solver3), 
                  solver4 = VALUES(solver4), 
-                 solver5 = VALUES(solver5)";
+                 solver5 = VALUES(solver5),
+                 usuario_id = VALUES(usuario_id)";
     
     $stmt = $pdo->prepare($sql);
 
-    // 5. LOOP E EXECUÇÃO (sem alteração)
+    // 5. LOOP E EXECUÇÃO
     foreach ($resolucoes as $modalidadeId => $resolucoesAluno) {
         foreach ($resolucoesAluno as $alunoId => $solverData) {
             
@@ -97,7 +104,7 @@ try {
                 $solverValues["solver" . $i] = trim($valor); 
             }
 
-            // Define os parâmetros para a instrução SQL
+            // Define os parâmetros para a instrução SQL (incluindo o usuario_id)
             $params = [
                 ':aluno'      => $alunoId,
                 ':modalidade' => $modalidadeId,
@@ -106,6 +113,7 @@ try {
                 ':s3'         => $solverValues["solver3"],
                 ':s4'         => $solverValues["solver4"],
                 ':s5'         => $solverValues["solver5"],
+                ':usuario_id' => $usuarioIdLogado,
             ];
 
             // Executa o INSERT ou UPDATE.

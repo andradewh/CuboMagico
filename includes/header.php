@@ -82,6 +82,7 @@ $is_superuser = $usuario_logado ? (int)($_SESSION['usuario']['superuser'] ?? 0) 
                     </a>
                     <div class="dropdown-menu" aria-labelledby="dashDropdown">
                         <a class="dropdown-item" href="../public/dash.php"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+                        <a class="dropdown-item" href="../public/relatorio_pendencias.php"><i class="fa-solid fa-chart-line"></i> Auditoria</a>
                     </div>
                 </li>
             <?php endif; ?>
